@@ -1,0 +1,14 @@
+This document records the versions of different modules that are 
+compatible with the codes.
+
+python = 2.7.3
+numpy = 1.8.1
+scipy = 0.9.0
+pandas = 0.14.0
+matplotlib = 1.2.0
+Basemap = 1.0.5
+netCDF4 = 1.0.1
+osgeo = 1.7.3
+gdal = 1.7.3
+nose = 1.1.2
+weakref = Unknown
