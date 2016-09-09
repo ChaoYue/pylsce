@@ -717,7 +717,8 @@ class Pdata(object):
         index_func: index function that will be applied before using the
             DataFrame index as shared xaxis of the Pdata object, this is
             useful as sometimes DataFrame index could be a bit strange
-            and not readily compatible with matplotlib functions.
+            and not readily compatible with matplotlib functions. When None,
+            index values will be used.
         force_sharex: In case index_func could not achieve the object to
             transform the index to desired sharex xaxis, force_sharex
             is used to force write the Pdata shared xaxis.
@@ -3416,6 +3417,15 @@ class NestPdata(object):
                 taglist=taglist,axis=axis,copy=True)
         return NestPdata(dic)
 
+    def revert_xy(self):
+        """
+        Exchange the values of x,y in the data.
+        """
+        dic = OrderedDict()
+        for ptag,cpd in self.iteritems():
+            dic[ptag] = cpd.revert_xy()
+
+        return NestPdata(dic)
 
     def pool_data_by_tag(self,mode='child',tagkw=False,**group_dic):
         """
@@ -3829,7 +3839,7 @@ class NestPdata(object):
                 legtag = _replace_none_by_given(legtag,self.parent_tags[0])
                 legax = self.lax[legtag]
 
-            self.child_pdata[legtag].set_legend(plottype='bar',taglab=True,
+            self.child_pdata[tag].set_legend(plottype='bar',taglab=True,
                                                 tag_seq=legtagseq,axes=legax,
                                                 **legkw)
 
@@ -4994,10 +5004,20 @@ class Mdata(Pdata):
         self.recdic = recdic
 
 
-    def apply_function(self,func=None,taglist=None,copy=False,return_dic=False,
-                       return_series=False):
+    def apply_function(self,func=None,taglist=None,copy=False,
+                       return_object='dic',
+                       Pdata_x='lat'):
         '''
         Apply a function on the array for the tags as specified in taglist
+
+        Parameters:
+        ----------
+        return_object:
+            'dic': return a dic
+            'series': pandas Series
+            'Pdata': Pdata.Pdata object, with Pdata_x being the x-value.
+            else: Mdata object
+
         '''
         if copy == True:
             pdtemp = self.copy()
@@ -5008,18 +5028,19 @@ class Mdata(Pdata):
         for tag in taglist:
             pdtemp.data[tag]['array']=func(pdtemp.data[tag]['array'])
 
-        if not return_dic:
-            return pdtemp
+        dic = pdtemp.get_data_as_dic('array')
+        if return_object == 'dic':
+            return dic
+        elif return_object == 'series':
+            return pa.Series(dic)
+        elif return_object == 'Pdata':
+            pd = Pdata()
+            for tag in dic.keys():
+                pd.add_entry_noerror(x=pdtemp.data[tag][Pdata_x],
+                                     y=dic[tag],tag=tag)
+            return pd
         else:
-            dic = pdtemp.get_data_as_dic('array')
-            if return_dic:
-                return dic
-            else:
-                if return_series:
-                    return pa.Series(dic)
-                else:
-                    return pdtemp
-
+            return pdtemp
 
     @classmethod
     def merge_mdata(cls,*mdlist):

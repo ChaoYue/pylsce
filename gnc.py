@@ -2620,52 +2620,64 @@ class Ncdata(object):
     def Plot_PointValue_PFTsum(self,var,(vlat,vlon),ax=None,ylab=False,pyfunc=None):
         pass
 
-    def get_zonal(self,varname=None,npindex=np.s_[:],pftsum=False,
-                  area=False,mode='sum',forcedata=None,
-                  pyfunc=None):
+    def get_zonal(self,varlist,pftsum=False,
+                  npindex=np.s_[:],pyfunc=None,
+                  area=False,mode='sum',forcedata=None):
         """
-        Get the zonal mean or sum.
+        Get the zonal mean or sum. Apply sequence: pftsum, npindex,pyfunc.
+            After this sequential treatment, the data must be of dim = (lat,lon).
 
         Parameters:
         -----------
-        area: boolean value. If True, the "Areas" variable will be used to
-            get the flux amount. Error raised if "Areas" is not found.
-        mode: 'sum' or 'mean'
         npindex: used to retrieve part of the varname data
         pyfunc: being applied just after the retrieval of the data
+        area: True to the "Areas" variable in the data; ndarray for directly
+            supplying an area array. Will be used to get the flux amount. 
+        mode: 'sum' or 'mean'
         """
-
-        ncdata = self._get_final_ncdata_by_flag(pftsum=pftsum)
-        if varname is not None:
-            if forcedata is not None:
-                data = forcedata
+        if isinstance(varlist,(str,unicode)):
+            varname = varlist
+            ncdata = self._get_final_ncdata_by_flag(pftsum=pftsum)
+            if varname is not None:
+                if forcedata is not None:
+                    data = forcedata
+                else:
+                    data = ncdata.__dict__[varname]
             else:
-                data = ncdata.__dict__[varname]
-        else:
-            raise ValueError("must give either varname or forcedata")
-        data = data[npindex]
-        data = mathex.apply_func(data,pyfunc=pyfunc)
-        if len(data.shape) > 2:
-            raise ValueError("data shape >2 before final operation")
+                raise ValueError("must give either varname or forcedata")
 
-        if area is True:
-            try:
-                data = data * self.d1.Areas
-            except AttributeError:
-                raise ValueError("Areas not present in the ncdata")
-        elif isinstance(area,np.ndarray):
-            data = data * area
-        else:
-            pass
+            data = data[npindex]
+            data = mathex.apply_func(data,pyfunc=pyfunc)
 
-        if mode == 'sum':
-            fmdata = np.ma.sum(data,axis=-1)
-        elif mode == 'mean':
-            fmdata = np.ma.mean(data,axis=-1)
-        else:
-            raise ValueError("wrong operation mode")
+            if len(data.shape) > 2:
+                raise ValueError("data shape >2 before final operation")
 
-        return pa.Series(fmdata,index=self.lat)
+            if area is True:
+                try:
+                    data = data * self.d1.Areas
+                except AttributeError:
+                    raise ValueError("Areas not present in the ncdata")
+            elif isinstance(area,np.ndarray):
+                data = data * area
+            else:
+                pass
+
+            if mode == 'sum':
+                fmdata = np.ma.sum(data,axis=-1)
+            elif mode == 'mean':
+                fmdata = np.ma.mean(data,axis=-1)
+            else:
+                raise ValueError("wrong operation mode")
+
+            return pa.Series(fmdata,index=self.lat)
+        else:
+            dic = OrderedDict()
+            for var in varlist:
+                s = self.get_zonal(var,pftsum=pftsum,
+                                   npindex=npindex,pyfunc=pyfunc,
+                                   area=area,mode=mode,forcedata=forcedata)
+                dic[var] = s
+            return pa.DataFrame(dic)
 
 
     def _get_final_ncdata_by_flag(self,pftsum=False,spa=None):
@@ -3560,6 +3572,22 @@ class NestNcdata(object):
             nd.get_pftsum(varlist=varlist,area_include=area_include,
                          veget_npindex=veget_npindex,
                          print_info=print_info,name_vegetmax=name_vegetmax)
+
+    def apply_func(self,varlist,func):
+        """
+        Apply function over varlist, return a dictionary when varlist is of
+            type string, otherwise a nested dictionary will be returned.
+        """
+        if isinstance(varlist,str):
+            dic = OrderedDict()
+            for tag,nd in self.items():
+                dic[tag] = func(nd.d1.__dict__[varlist])
+            return dic
+        elif isinstance(varlist,list):
+            dic = OrderedDict()
+            for varname in varlist:
+                dic[varname] = self.apply_func(varname,func)
+            return dic
 
 
 def nc_get_var_value_grid(ncfile,varname,(vlat1,vlat2),(vlon1,vlon2),
