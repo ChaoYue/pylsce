@@ -309,7 +309,6 @@ class LabelAxes(object):
         newaxs = [g.Axes_Replace_by_IceCore(ax,num,direction=direction)
                     for ax in self.axl]
         newaxs = np.array(newaxs)
-        print newaxs.shape
         if keys is None:
             keys = range(newaxs.shape[1])
 
@@ -320,11 +319,11 @@ class LabelAxes(object):
         return dic
 
 
-    def reduce_ticks_by_half(self,axis='y'):
+    def reduce_ticks_by_half(self,axis='y',index=slice(None)):
         """
         Reduce the x/y/both axis ticks by half.
         """
-        for ax in self.axl:
+        for ax in self.axl[index]:
             if axis == 'y':
                 ortick = ax.get_yticks()
                 ax.set_yticks(ortick[::2])
@@ -414,6 +413,29 @@ class LabelAxes2D(object):
                 self.parent_tags = laxdic.keys()
                 self.child_tags = laxdic.values()[0].tags
 
+    @classmethod
+    def from_axes_matrix(cls,axs,parent_tags,child_tags,
+                         parent_as_column=True):
+        """
+        """
+        dic = OrderedDict()
+        if parent_as_column:
+            if len(parent_tags) != axs.shape[1]:
+                raise ValueError("""length of parent_tags not equal to axs.shape[1]
+                                    while parent_as_column is True""")
+            else:
+                for i,ptag in enumerate(parent_tags):
+                    dic[ptag] = LabelAxes(tags=child_tags,axl=axs[:,i])
+        else:
+            if len(parent_tags) != axs.shape[0]:
+                raise ValueError("""length of parent_tags not equal to axs.shape[0]
+                                    while parent_as_column is False""")
+            else:
+                for i,ptag in enumerate(parent_tags):
+                    dic[ptag] = LabelAxes(tags=child_tags,axl=axs[i,:])
+
+        return LabelAxes2D(dic)
+
     @property
     def data(self):
         dic = OrderedDict()
@@ -455,9 +477,9 @@ class LabelAxes2D(object):
         for ptag in self.parent_tags:
             self.child_lax[ptag].set_axis_bgcolor(colordict[ptag])
 
-    def add_parent_label(self,pos='ouc',ftdic={'size':12},**kwargs):
+    def add_parent_label(self,pos='ouc',ftdic={'size':12},color='k',**kwargs):
         for ptag,lax in self.iteritems():
-            lax.add_label(label=ptag,pos=pos,ftdic=ftdic,**kwargs)
+            g.Set_AxText(lax[0],ptag,pos=pos,ftdic=ftdic,color=color,**kwargs)
 
     def add_child_label(self,ptag=None,pos='ouc',color='m',ftdic={'size':12},**kwargs):
         ptag = _replace_none_by_given(ptag,self.parent_tags[-1])

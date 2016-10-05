@@ -734,14 +734,18 @@ class Pdata(object):
         if force_sharex is None:
             if index_func is None:
                 if ignore_index:
-                    pd.add_entry_sharex_noerror_by_dic(df,x=range(len(df)))
+                    pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df)))
                 else:
-                    pd.add_entry_sharex_noerror_by_dic(df,x=df.index.values)
+                    if sharexlabel:
+                        pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df))*len(df.columns))
+                    else:
+                        pd.add_entry_sharex_noerror_by_dic(df,x=df.index.values)
             else:
                 pd.add_entry_sharex_noerror_by_dic(df,x=index_func(df.index))
         else:
             pd.add_entry_sharex_noerror_by_dic(df,x=force_sharex)
         pd.set_tag_order(list(df.columns))
+
         if sharexlabel:
             pd._sharexlabel = map(str,df.index.tolist())
             pd._sharex = True
@@ -2084,11 +2088,10 @@ class Pdata(object):
         attr_dic=Pdata._bar_attr_default.copy()
         attr_dic.update(Dic_Extract_By_Subkeylist(kwargs,Pdata._bar_attr_base_keylist))
         kwargs=Dic_Remove_By_Subkeylist(kwargs,Pdata._plot_attr_keylist_all)
-        #print '_gbar',kwargs
-        #print '_bar',attr_dic
         return axes.bar(left, height, width=width, bottom=bottom, label=label, **kwargs)
 
-    def bar(self,axes=None,xticklabel=None,xlabrot=None,stacked=False,legend=True,**kwargs):
+    def bar(self,axes=None,xticklabel=None,xlabrot=None,stacked=False,legend=True,
+            xlabkw={},**kwargs):
 
         if stacked==False:
             pass # as the bbottom by default is 0
@@ -2113,7 +2116,6 @@ class Pdata(object):
                 tag_kwargs=kwargs.copy()
                 tag_plot_attr_dic=Dic_Remove_By_Subkeylist(tag_data,Pdata._all_nonplot_keylist)
                 tag_kwargs.update(tag_plot_attr_dic)
-                #print 'tag & tag_kwargs',tag,tag_kwargs
                 _barleft = tag_data['x']-tag_data['bleftshift']*i-tag_data['bwidth']*0.5
                 self.Bar_Container[tag]=self._gbar(axes,_barleft,tag_data['y'],width=tag_data['bwidth'],\
                                                    bottom=tag_data['bbottom'],\
@@ -2138,7 +2140,7 @@ class Pdata(object):
                 else:
                     pass
 
-            if xlabel_set: axes.set_xticklabels(xlabels,rotation=xlabrot)
+            if xlabel_set: axes.set_xticklabels(xlabels,rotation=xlabrot,**xlabkw)
 
             if 'color' not in kwargs:
                 colors = _replace_none_colorlist(num=len(self))
@@ -2153,7 +2155,7 @@ class Pdata(object):
             self.axes = axes
             return self.Bar_Container
 
-    def barleft_Pdata(self,yshift=0.1):
+    def barleft_Pdata(self,yshift=0.):
         """
         Return a copy of self, with x value being replaced by the real x
             values used in the bar plot function. This is in most cases used
@@ -2365,6 +2367,26 @@ class Pdata(object):
             targetdic[temptag]['x'] = pd.data[tag]['y']
         return Pdata(targetdic)
 
+    def set_data_by_Pdata(self,by=None,to_axis='x',from_axis='x'):
+        """
+        Set the xdata, always return a copy.
+
+        Parameters:
+        -----------
+        by:
+            in case of Pdata object, the xdata of the Pdata object will
+            replace the xdata by corresponding tags.
+        """
+        pd = self.copy()
+
+        if isinstance(by,Pdata):
+            for tag in pd.taglist:
+                pd.data[tag][to_axis] = by.data[tag][from_axis]
+        else:
+            raise TypeError
+
+        return pd
+
     def collapse_xdata_as_tag(self,tag,newxdata=None):
         """
         Collapse the xdata as a tag, use newxdata to set the newxdata
@@ -2421,7 +2443,7 @@ class Pdata(object):
 
     def set_legend(self,plottype='all',axes=None,taglab=True,
                    twinx=False,
-                       tag_seq=None,**kwargs):
+                   tag_seq=None,**kwargs):
         """
         plottype: could be 'line','sca'/'scatter','bar','stackline'
         """
@@ -2445,7 +2467,6 @@ class Pdata(object):
 
     def set_legend_all(self,axes=None,taglab=False,
                        tag_seq=None,**kwargs):
-        print "DeprecatingWarning: set_legend_all"
         self.set_legend('all',axes=axes,taglab=taglab,
                         tag_seq=tag_seq,**kwargs)
 
@@ -4252,6 +4273,7 @@ class NestPdata(object):
         if isinstance(dict_dataframe,pa.Panel) and sharexlabel:
             npd._sharex = True
             npd._sharexlabel = map(str,dict_dataframe.major_axis.tolist())
+            #npd.add_attr_by_tag(x=np.ara)
 
         #npd.set_parent_tag_order(ptags)
         return npd
@@ -4317,9 +4339,161 @@ class Pdata3D(object):
         """parent tags: {0}""".format(self.parent_tags) + '\n' +\
         "child tags: {0}".format(self.child_tags)
 
+    def xs_pd(self,label,parent_tag):
+        return self.child_npd[label].child_pdata[parent_tag]
 
-    def plot_icecore(self,legkw={},add_label=True,legtag=False,plotkw={},**kwargs):
+    def set_label_order(self,labseq=None):
         """
+        Set tag order and this order will be kept throughout all the class
+        method when default taglist is used.
+        """
+        if sorted(self.labels) == sorted(labseq):
+            self.labels = labseq[:]
+        else:
+            raise ValueError('ordered labels not equal to present one')
+
+    def set_parent_tag_order(self,taglist):
+        for ptag,npd in self.iteritems():
+            npd.set_parent_tag_order(taglist)
+        self.parent_tags = taglist[:]
+
+    def set_child_tag_order(self,taglist):
+        for ptag,npd in self.iteritems():
+            npd.set_child_tag_order(taglist)
+        self.child_tags = taglist[:]
+
+    def build_lax2D(self,add_label=True,
+                    pos_label='ouc',color_label='k',textkw_label={},
+                    pos_parent=(-0.2,0.5),color_parent='k',textkw_parent={},
+                    axes_style='matrix',
+                    **kwargs):
+        """
+        Build a lax2D project to plot. First level of the axes is label, second
+            level is parent_tags, third level as child_tags.
+
+
+        Parameters:
+        -----------
+        axes_style == 'matrix':
+
+        axes_style == 'icecore':
+            kwargs:
+                force_axs: force the axes.
+                tagseq: the sequence for parent tags.
+                tagcolor: the tag color, could be list.
+                force_axdic: force a dictionary of parent_tag/axes pairs.
+                ncols: num of columns when force_axs is None
+                sharex,sharey: the same as plt.subplots
+                tagpos: the position of parent_tag
+                column_major: True if parent tags are deployed in column-wise.
+                unit: used as ylabel for each subplot
+                xlim: xlim
+                plotkw: the keyword used in plt.plot function.
+                tagprefix:
+                    1. default value is empty string.
+                    2. in case of 'alpha', alphabetic values will be appended.
+                       in case of 'Alpha', uppercase alphabetic values appended.
+                    2. in case of 'numeric', numbers will be appended.
+                tagbracket:
+                    1. default value is 'normal', i.e., "()" will be used.
+                    subkw: kwarg in plt.subplots function
+        """
+        if axes_style == 'matrix':
+            nrows = len(self.parent_tags)
+            ncols = len(self.labels)
+            # note here column_major is False
+            axdic = _creat_dict_of_tagaxes_by_tagseq_g(
+                                default_tagseq=['dummy%s'%s for s in range(nrows*ncols)],
+                                ncols=ncols,
+                                tagpos=False,
+                                **kwargs)
+            axs = np.array(axdic.values()).reshape(nrows,ncols,order='C')
+            lax2D = LabelAxes.LabelAxes2D.from_axes_matrix(axs,self.labels,
+                                                           self.parent_tags,
+                                                           parent_as_column=True)
+            self.lax2D = lax2D
+
+            if add_label == True:
+                lax2D.add_parent_label(pos=pos_label,color=color_label,**textkw_label)
+
+            lax = lax2D[self.labels[0]]
+            lax.add_label(pos=pos_parent,color=color_parent,**textkw_parent)
+
+        elif axes_style == 'icecore':
+            axdic = _creat_dict_of_tagaxes_by_tagseq_g(
+                                default_tagseq=self.labels,
+                                **kwargs)
+
+            lax = LabelAxes.LabelAxes(tags=axdic.keys(),axl=axdic.values())
+            dic = lax.build_icecore(num=len(self.parent_tags),keys=self.parent_tags[:])
+            lax2D = LabelAxes.LabelAxes2D(dic)
+            self.lax2D = lax2D
+
+            if add_label == True:
+                lax2D.add_parent_label(pos=pos_label,color=color_label,**textkw_label)
+                for ptag,lax in self.lax2D.iteritems():
+                    lax.add_label(pos=pos_parent,color=color_parent,**textkw_parent)
+        else:
+            raise ValueError("Unknown axes_style")
+
+
+    def plot(self,plotkw={},legkw={},legtag=False,
+             add_label=True,
+             pos_label='ouc',color_label='k',textkw_label={},
+             pos_parent=(-0.2,0.5),color_parent='k',textkw_parent={},
+             axes_style='matrix',
+             **kwargs):
+        """
+        Plot on a icecore-like plot. First level of the axes is label, second
+            level is parent_tags, third level as child_tags.
+
+
+        Parameters:
+        -----------
+        legtag: the child tag for which legend will be shown, False to supress.
+        legtagseq: the child tag sequence for the legtag.
+        legkw: used in plt.legend for the legtag
+        plotkw: the keyword used in plt.plot function.
+        kwargs:
+            force_axs: force the axes.
+            tagseq: the sequence for parent tags.
+            tagcolor: the tag color, could be list.
+            force_axdic: force a dictionary of parent_tag/axes pairs.
+            ncols: num of columns when force_axs is None
+            sharex,sharey: the same as plt.subplots
+            tagpos: the position of parent_tag
+            column_major: True if parent tags are deployed in column-wise.
+            unit: used as ylabel for each subplot
+            xlim: xlim
+            plotkw: the keyword used in plt.plot function.
+            tagprefix:
+                1. default value is empty string.
+                2. in case of 'alpha', alphabetic values will be appended.
+                   in case of 'Alpha', uppercase alphabetic values appended.
+                2. in case of 'numeric', numbers will be appended.
+            tagbracket:
+                1. default value is 'normal', i.e., "()" will be used.
+                subkw: kwarg in plt.subplots function
+        """
+        self.build_lax2D(add_label=add_label,
+                         pos_label=pos_label,color_label=color_parent,textkw_label={},
+                         pos_parent=pos_parent,color_parent=color_parent,textkw_parent={},
+                         axes_style=axes_style,
+                         **kwargs)
+
+        for label,npd in self.iteritems():
+            npd.plot_split_parent_tag(plotkw=plotkw,legtag=legtag,tagpos=False,
+                              force_axdic=self.lax2D[label].data,legkw=legkw)
+
+    def plot_icecore(self,legkw={},add_label=True,legtag=False,plotkw={},
+                     pos_label='ouc',color_label='k',textkw_label={},
+                     pos_parent='ul',color_parent='b',textkw_parent={},
+                     **kwargs):
+        """
+        Plot on a icecore-like plot. First level of the axes is label, second
+            level is parent_tags, third level as child_tags.
+
+
         Parameters:
         -----------
         legtag: the child tag for which legend will be shown, False to supress.
@@ -4348,22 +4522,23 @@ class Pdata3D(object):
                 subkw: kwarg in plt.subplots function
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
-                            default_tagseq=self.parent_tags,
+                            default_tagseq=self.labels,
                             default_tagpos=(0.02,0.83),
                             **kwargs)
 
         lax = LabelAxes.LabelAxes(tags=axdic.keys(),axl=axdic.values())
-        dic = lax.build_icecore(num=len(self.labels),keys=self.labels[::-1])
+        dic = lax.build_icecore(num=len(self.parent_tags),keys=self.parent_tags[:])
         lax2D = LabelAxes.LabelAxes2D(dic)
+        self.lax2D = lax2D
+
+        if add_label == True:
+            lax2D.add_parent_label(pos=pos_label,color=color_label,**textkw_label)
+            for ptag,lax in self.lax2D.iteritems():
+                lax.add_label(pos=pos_parent,color=color_parent,**textkw_parent)
+
         for label,npd in self.iteritems():
             npd.plot_split_parent_tag(plotkw=plotkw,legtag=legtag,tagpos=False,
-                              force_axdic=lax2D[label].data)
-
-        self.lax2D = lax2D
-        if add_label == True:
-            lax2D.add_parent_label(pos=(0.02,0.8))
-            lax2D.add_child_label()
-
+                              force_axdic=lax2D[label].data,legkw=legkw)
 
     def get_proleg2D(self,childtag=None,plottype='all',taglab=True,tag_seq=None):
         plegs = []
@@ -4375,32 +4550,40 @@ class Pdata3D(object):
 
     def setp_tag(self,label=None,plottype='all',tagkw=False,
                 legend_update=True,
+                legkw={},
                  **nested_attr_tag_value_dic):
         """
         """
-        self.child_npd[label].setp_tag(plottype='all',tagkw=tagkw,**nested_attr_tag_value_dic)
-        if legend_update:
-            self.set_legend_all()
-
-    def set_label_order(self,labseq=None):
-        """
-        Set tag order and this order will be kept throughout all the class
-        method when default taglist is used.
-        """
-        if sorted(self.labels) == sorted(labseq):
-            self.labels = labseq[:]
+        if label is None:
+            labels = self.labels
         else:
-            raise ValueError('ordered labels not equal to present one')
+            labels = [label]
 
-    def set_parent_tag_order(self,taglist):
-        for ptag,npd in self.iteritems():
-            npd.set_parent_tag_order(taglist)
-        self.parent_tags = taglist[:]
+        for label in labels:
+            self.child_npd[label].setp_tag(plottype='all',tagkw=tagkw,
+                                           legend_update=False,
+                                           **nested_attr_tag_value_dic)
+            if legend_update:
+                self.child_npd[label].set_legend_all(**legkw)
 
-    def set_child_tag_order(self,taglist):
-        for ptag,npd in self.iteritems():
-            npd.set_child_tag_order(taglist)
-        self.child_tags = taglist[:]
+    def set_legend(self,label=None,parent_tag=None,plottype='all',
+                   axes=None,taglab=True,tag_seq=None,**kwargs):
+        """
+        """
+        if label is None:
+            label = self.labels[0]
+        elif isinstance(label,int):
+            label = self.labels[label]
+
+        if parent_tag is None:
+            parent_tag = self.parent_tags[0]
+        elif isinstance(parent_tag,int):
+            parent_tag = self.parent_tags[parent_tag]
+
+        pd = self.xs_pd(label,parent_tag)
+        pd.set_legend(taglab=taglab,tag_seq=tag_seq,axes=axes,**kwargs)
+
+
 
 
 def plot_bar_p4dreg(p4d,r_name='r_value',p_name='p_value',
@@ -5005,7 +5188,7 @@ class Mdata(Pdata):
 
 
     def apply_function(self,func=None,taglist=None,copy=False,
-                       return_object='dic',
+                       return_object=None,
                        Pdata_x='lat'):
         '''
         Apply a function on the array for the tags as specified in taglist
@@ -5040,7 +5223,10 @@ class Mdata(Pdata):
                                      y=dic[tag],tag=tag)
             return pd
         else:
-            return pdtemp
+            if copy:
+                return pdtemp
+            else:
+                pass
 
     @classmethod
     def merge_mdata(cls,*mdlist):
