@@ -89,6 +89,8 @@ CCC = {
        'Vermilion':np.array([213,94,0])/255.,
        'ReddishPurple':np.array([204,121,167])/255.
        }
+
+CCClist=[CCC['ReddishPurple'],CCC['Blue'],CCC['BluishGreen'],CCC['Vermilion'],CCC['Black'],CCC['Orange'],CCC['Yellow']]
 CCC4=[CCC['Black'],CCC['Blue'],CCC['Vermilion'],CCC['BluishGreen']]
 
 def show_CCC():
@@ -2104,6 +2106,17 @@ class ProxyLegend(object):
             del self.data[oldtag]
             self.tags[self.tags.index(oldtag)] = newtag
 
+    def rename(self,tags=None):
+        """
+        tags could be a dict or a function. Return a copy.
+        """
+        pleg = self.copy()
+        if callable(tags):
+            newtags = [tags(tag) for tag in pleg.tags]
+            pleg.set_new_tags(zip(self.tags,newtags))
+        return pleg
+
+
     @staticmethod
     def _check_void_handle_label(label):
         if label == '':
@@ -2312,7 +2325,7 @@ def Axes_get_bounds(axs):
     return [fig,(x0,x1,y0,y1)]
 
 def _get_axesrec_by_pos_offset(rec,pos,offset,width=None,height=None,
-                               middle=True):
+                               middle=True,shift=None):
     """
     Get the new rect by the old rec and pos,offset,width,height.
 
@@ -2383,13 +2396,18 @@ def _get_axesrec_by_pos_offset(rec,pos,offset,width=None,height=None,
     else:
         pass
 
+    if shift is not None:
+        nx0 = nx0+shift[0]
+        xy0 = ny0+shift[1]
+
     return (nx0,ny0,width,height)
 
 
 
 
 def Axes_add_axes(relative=None,pos='right',offset=None,
-                  width=None,height=None,middle=True,**kwargs):
+                  width=None,height=None,middle=True,shift=None,
+                  **kwargs):
     """
     Add an axes relative to some other (group of) axes.
 
@@ -2406,6 +2424,8 @@ def Axes_add_axes(relative=None,pos='right',offset=None,
         'above/below', width will be calculated as the same of
         the relative unless it's being forced.
     middle: boolean value. True to put the axes right in the middle.
+    shift: 2-len tuple of (right_shift,above_shift), use negative value
+        for the shift in reverse direction.
 
     kwargs: kwargs used in mat.figure.Figure.add_axes
 
@@ -2423,7 +2443,8 @@ def Axes_add_axes(relative=None,pos='right',offset=None,
     newrec = _get_axesrec_by_pos_offset(rec,pos,offset,
                                         width=width,
                                         height=height,
-                                        middle=middle)
+                                        middle=middle,
+                                        shift=shift)
 
     return fig.add_axes(newrec,**kwargs)
 
@@ -2448,6 +2469,12 @@ def Axes_set_visible(ax,visible=False):
     else:
         raise TypeError("wrong ax type")
 
+def Axes_remove_last_yticklabel(ax,ind=0):
+    """
+    """
+    tlabels = ax.get_yticks().tolist()
+    tlabels[ind] = ''
+    ax.set_yticklabels(tlabels)
 
 def imshow(data,lognorm=False,ax=None,vmin=None,vmax=None,**kwargs):
     if ax is None: fig,ax = Create_1Axes()

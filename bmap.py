@@ -110,9 +110,9 @@ class gmap(object):
         if step_lon <= 0:
             raise TypeError("lon input is decreasing!")
 
-        if lat[0]-90.<1e-4 or lat[-1]+90.<1e-4:
+        if abs(lat[0]-90.)<1e-4 or lat[-1]+90.<1e-4:
             centerlatend = False
-        if lon[0]+180.<1e-4 or lon[-1]-180.<1e-4 or lon[-1]-360.<1e-4:
+        if lon[0]+180.<1e-4 or abs(lon[-1]-180.)<1e-4 or abs(lon[-1]-360.)<1e-4:
             centerlatend = False
 
         ## Draw map for different projections
@@ -744,8 +744,11 @@ class mapimshow(object):
         shift --> boolean value. False for longtitude data ranging [-180,180];
             for longtitude data ranging [0,360] set shift to True if
             a 180 east shift is desired.
+
+    args,kwargs: for plt.imshow
     """
     def __init__(self,data=None,lat=None,lon=None,ax=None,
+                 rlat=None,rlon=None,
                  projection='cyl',mapbound='all',
                  gridstep=(30,30),shift=False,map_threshold=None,
                  cmap=None,colorbarlabel=None,forcelabel=None,
@@ -761,6 +764,7 @@ class mapimshow(object):
         (mgmap,pdata,plotlev,plotlab,extend,
          trans_base_list,data_transform) = \
             _generate_map_prepare_data(data=data,lat=lat,lon=lon,
+                                       rlat=rlat,rlon=rlon,
                                        projection=projection,
                                        mapbound=mapbound,
                                        gridstep=gridstep,
@@ -773,7 +777,7 @@ class mapimshow(object):
                                        gmapkw=gmapkw,
                                        ax=ax)
 
-        cs=mgmap.m.imshow(pdata,origin='upper',*args,**kwargs)
+        cs=mgmap.m.imshow(pdata,cmap=cmap,origin='upper',*args,**kwargs)
 
         cbar = _set_colorbar(mgmap.m,cs,
                              colorbardic=colorbardic,

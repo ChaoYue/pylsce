@@ -61,7 +61,7 @@ def Dic_Filter_by_Key(inputdic,*keys):
     """
     Filter a dictionary for by checking if key contains (one or more) strings
     """
-    outdic={}
+    outdic=OrderedDict()
     for inkey in inputdic.keys():
         state=True
         for key in keys:

@@ -1574,6 +1574,9 @@ class Ncdata(object):
             elif 'latitude' in self.dimensions and 'longitude' in self.dimensions:
                 self.latdim_name = 'latitude'
                 self.londim_name = 'longitude'
+            elif 'Latitude' in self.dimensions and 'Longitude' in self.dimensions:
+                self.latdim_name = 'Latitude'
+                self.londim_name = 'Longitude'
             elif 'x' in self.dimensions and 'y' in self.dimensions:
                 self.latdim_name = 'y'
                 self.londim_name = 'x'
@@ -1594,6 +1597,9 @@ class Ncdata(object):
         elif 'LATITUDE' in self.varlist_all and 'LONGITUDE' in self.varlist_all:
             self.latvar_name='LATITUDE'
             self.lonvar_name='LONGITUDE'
+        elif 'Latitude' in self.varlist_all and 'Longitude' in self.varlist_all:
+            self.latvar_name='Latitude'
+            self.lonvar_name='Longitude'
         elif 'latitude' in self.varlist_all and 'longitude' in self.varlist_all:
             self.latvar_name='latitude'
             self.lonvar_name='longitude'
@@ -3432,9 +3438,13 @@ class Ncdata(object):
         if self.largefile:
             self.retrieve_variables(varlist)
             self.d1.__dict__['WOODMASS'] = self.d1.SAP_M_AB + self.d1.SAP_M_BE + self.d1.HEART_M_AB + self.d1.HEART_M_BE
+            self.d1.__dict__['WOODMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB
+            self.d1.__dict__['WOODMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE
             self.remove_variables(varlist)
         else:
             self.d1.__dict__['WOODMASS'] = self.d1.SAP_M_AB + self.d1.SAP_M_BE + self.d1.HEART_M_AB + self.d1.HEART_M_BE
+            self.d1.__dict__['WOODMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB
+            self.d1.__dict__['WOODMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE
 
     def OrcBio_get_bmab(self):
         """
@@ -3462,6 +3472,15 @@ class Ncdata(object):
             self.d1.__dict__['LITTER_AB'] = self.d1.LITTER_STR_AB + self.d1.LITTER_MET_AB
             self.d1.__dict__['LITTER_BE'] = self.d1.LITTER_STR_BE + self.d1.LITTER_MET_BE
             self.d1.__dict__['LITTER'] = self.d1.__dict__['LITTER_AB'] + self.d1.__dict__['LITTER_BE']
+
+    def OrcBio_get_autoresp(self):
+        varlist = ['MAINT_RESP','GROWTH_RESP']
+        if self.largefile:
+            self.retrieve_variables(varlist)
+            self.d1.__dict__['AUTO_RESP'] = self.d1.MAINT_RESP + self.d1.GROWTH_RESP
+            self.remove_variables(varlist)
+        else:
+            self.d1.__dict__['AUTO_RESP'] = self.d1.MAINT_RESP + self.d1.GROWTH_RESP
 
     def OrcBio_get_NBP(self):
         varlist = ['NPP','HET_RESP','CO2_FIRE']

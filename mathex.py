@@ -1006,7 +1006,7 @@ def CVRMSD(a,b):
 
 def RMSD(sim,obs):
     """
-    Return Root Mean Square Deviation
+    Return Root Mean Square Deviation (Error).
     """
     a=sim
     b=obs
@@ -1962,6 +1962,9 @@ def dataframe_change_geoindex_to_tuple(df):
     return df
 
 def dataframe_remove_monthly_mean(dft):
+    """
+    Remove monthly mean for a monthly time-step dataframe.
+    """
     dft_mon_mean = dft.groupby(lambda x:x.month).agg(np.mean)
     df_mon_mean_rep = pa.DataFrame(np.tile(dft_mon_mean.values,(len(dft)/12,1)),columns=dft.columns,index=dft.index)
     dft_mon_anomaly = dft - df_mon_mean_rep

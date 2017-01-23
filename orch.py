@@ -187,7 +187,9 @@ def dataframe_from_stomate(filepattern,largefile=True,multifile=True,
         list_flux_pftsum = ['CONVFLUX_LCC','CONVFLUX_HAR','CFLUX_PROD10_LCC','CFLUX_PROD10_HAR','CFLUX_PROD100_LCC','CFLUX_PROD100_HAR','HARVEST_ABOVE']
         list_flux = list_flux_pft+list_flux_pftsum
 
-        list_pool = ['TOTAL_M','TOTAL_SOIL_CARB','LEAF_M']
+        list_pool = ['TOTAL_M','TOTAL_SOIL_CARB','LEAF_M','SAP_M_AB','SAP_M_BE',
+                     'HEART_M_AB','HEART_M_BE','ROOT_M','FRUIT_M','RESERVE_M',
+                     'LITTER_STR_AB','LITTER_STR_BE','LITTER_MET_AB','LITTER_MET_BE']
         list_all = list_flux_pft+list_flux_pftsum+list_pool
         nlist_var = [list_flux_pft, list_flux_pftsum, list_pool]
 
@@ -258,6 +260,12 @@ def dataframe_from_stomate(filepattern,largefile=True,multifile=True,
         # get total carbon pool
         dft['PROD'] = dft['PROD10_LCC'] + dft['PROD10_HAR'] + dft['PROD100_LCC'] + dft['PROD100_HAR']
         dft['CarbonPool'] = dft['TOTAL_M'] + dft['TOTAL_SOIL_CARB'] + dft['PROD']
+        dft['LITTER_AB'] = dft['LITTER_STR_AB'] + dft['LITTER_MET_AB']
+        dft['LITTER_BE'] = dft['LITTER_MET_BE'] + dft['LITTER_STR_BE']
+        dft['LITTER'] = dft['LITTER_BE'] + dft['LITTER_AB']
+        dft['BIOMASS_AB'] = dft.SAP_M_AB + dft.HEART_M_AB + dft.LEAF_M + dft.FRUIT_M + dft.RESERVE_M
+        dft['BIOMASS_BE'] = dft.SAP_M_BE + dft.HEART_M_BE + dft.ROOT_M
+
 
         # treat GM
         dft['RANIMAL'] = dft['RANIMAL']*1000
@@ -274,6 +282,12 @@ def dataframe_from_stomate(filepattern,largefile=True,multifile=True,
         dft['NBP_npp'] = dft['NPP']+dft['CO2_TAKEN']-dft['CONVFLUX']-dft['CFLUX_PROD10']-dft['CFLUX_PROD100']-dft['CO2_FIRE'] \
                          -dft['HARVEST_ABOVE']-dft['HET_RESP']-dft['RANIMAL']-dft['METHANE']
         dft['NBP_co2flux'] = -1*(dft['CO2FLUX']+dft['HARVEST_ABOVE']+dft['CONVFLUX']+dft['CFLUX_PROD10']+dft['CFLUX_PROD100'])
+
+        # litter
+        dft['LITTER'] = dft[['LITTER_STR_AB','LITTER_STR_BE','LITTER_MET_AB','LITTER_MET_BE']].sum(axis=1)
+        dft['LITTER_AB'] = dft[['LITTER_STR_AB','LITTER_MET_AB']].sum(axis=1)
+        dft['LITTER_BE'] = dft[['LITTER_STR_BE','LITTER_MET_BE']].sum(axis=1)
+        dft['SOILC'] = dft['TOTAL_SOIL_CARB'] - dft['LITTER']
 
     else:
         raise ValueError("Unknown version!")

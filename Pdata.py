@@ -393,6 +393,7 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
                          tagpos=None, default_tagpos='ul',
                          unit=None, xlim=None,
                          subkw={},tagcolor='b',
+                         tagtxtkw={},
                          tagprefix='',tagbracket='normal')
 
     extra_keylist = pb.StringListAnotB(kwargs.keys(),paradict.keys())
@@ -419,6 +420,7 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
     tagcolor = paradict['tagcolor']
     tagprefix = paradict['tagprefix']
     tagbracket = paradict['tagbracket']
+    tagtxtkw = paradict['tagtxtkw']
 
     if force_axdic is not None:
         axdic = force_axdic
@@ -448,7 +450,7 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
     for tag,axt in axdic.items():
         default_tagpos = _replace_none_by_given(default_tagpos, 'ul')
         tagpos = _replace_none_by_given(tagpos, default_tagpos)
-        g.Set_AxText(axt,tags_final_dic[tag],tagpos,color=dictagc[tag])
+        g.Set_AxText(axt,tags_final_dic[tag],tagpos,color=dictagc[tag],**tagtxtkw)
         if unit is not None:
             if isinstance(unit,str):
                 #print "forced unit is used"
@@ -706,9 +708,11 @@ class Pdata(object):
     @classmethod
     def from_dataframe(cls,df,df_func=None,index_func=None,
                        force_sharex=None,ignore_index=False,
+                       index_xyname=None,
                        sharexlabel=False):
         """
-        Create a sharex Pdata.Pdata object from pandas DataFrame
+        Create a sharex Pdata.Pdata object from pandas DataFrame, using column
+            names as the tags.
 
         Parameters:
         -----------
@@ -723,6 +727,8 @@ class Pdata(object):
             transform the index to desired sharex xaxis, force_sharex
             is used to force write the Pdata shared xaxis.
         ignore_index: True to use range(len(df)) as the forced share x value.
+        index_xyname: a 2-length tuple, indicating the index names for x/y values
+            of the Pdata.
 
         Notes:
         ------
@@ -731,19 +737,29 @@ class Pdata(object):
         pd = Pdata()
         if df_func is not None:
             df = df_func(df)
-        if force_sharex is None:
-            if index_func is None:
-                if ignore_index:
-                    pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df)))
-                else:
-                    if sharexlabel:
-                        pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df))*len(df.columns))
+
+        if index_xyname is None:
+            if force_sharex is None:
+                if index_func is None:
+                    if ignore_index:
+                        pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df)))
                     else:
-                        pd.add_entry_sharex_noerror_by_dic(df,x=df.index.values)
+                        if sharexlabel:
+                            pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df))*len(df.columns))
+                        else:
+                            pd.add_entry_sharex_noerror_by_dic(df,x=df.index.values)
+                else:
+                    pd.add_entry_sharex_noerror_by_dic(df,x=index_func(df.index))
             else:
-                pd.add_entry_sharex_noerror_by_dic(df,x=index_func(df.index))
+                pd.add_entry_sharex_noerror_by_dic(df,x=force_sharex)
         else:
-            pd.add_entry_sharex_noerror_by_dic(df,x=force_sharex)
+            xname = index_xyname[0]
+            yname = index_xyname[1]
+            for tag in df.columns.tolist():
+                pd.add_tag(tag=tag)
+                pd.addx(np.array([df[tag].ix[xname]]),tag)
+                pd.addy(np.array([df[tag].ix[yname]]),tag)
+
         pd.set_tag_order(list(df.columns))
 
         if sharexlabel:
@@ -3042,7 +3058,8 @@ class Pdata(object):
         Parameters:
         -----------
         1. reg_df: the regression result dataframe, which must have
-            ['Intercept','Slope'] in its column names.
+            ['Intercept','Slope'] in its column names. Index should contain
+            all tags.
         """
         if not isinstance(reg_df,pa.DataFrame):
             raise TypeError("reg_df must be pandas DataFrame type!")
@@ -3178,9 +3195,14 @@ class Pdata(object):
         Merge Pdata.Pdata objects into a single Pdata.Pdata
         """
         newdata = OrderedDict()
+        taglist = []
         for pd in pdlist:
             newdata.update(pd.data)
-        return Pdata(data=newdata)
+            taglist = taglist[:] + pd.taglist[:]
+        pd_merge = Pdata(data=newdata)
+        pd_merge.set_tag_order(taglist)
+        return pd_merge
+
 
     def duplicate_tag(self,oldtag,newtag):
         self.add_tag(tag=newtag)
@@ -3548,7 +3570,7 @@ class NestPdata(object):
         elif legtag == 'last':
             axt = axdic.values()[0]
             axsall = axt.figure.axes
-            if len(axsall) > len(self.parent_tags):
+            if len(axsall) == len(self.parent_tags):
                 legax = axdic.values()[-1]
             else:
                 legax = axsall[-1]
@@ -3579,6 +3601,11 @@ class NestPdata(object):
         """
         Used to draw uncentainty like percentiles.
 
+        Parameters:
+        ----------
+        ylow,yhigh: attribute names used to derive the edges.
+        relative: boolean, when True, ylow and yhigh will be postive
+            and the real edges are calculated by `y-ylow` and `y+yhigh`
         kwargs: for plt.fill_between
         """
         if hasattr(self,'axdic'):
@@ -4188,8 +4215,17 @@ class NestPdata(object):
     def set_legend_all(self,legtag=None,legtagseq=None,**kwargs):
         '''
         Set legend using one of the child_pdata
+
+        Parameters:
+        -----------
+        legtag: could either one parent_tag or its 0-based index.
         '''
-        legtag = _replace_none_by_given(legtag,self.parent_tags[0])
+        if isinstance(legtag,str):
+            pass
+        elif isinstance(legtag,int):
+            legtag = self.parent_tags[legtag]
+        else:
+            legtag = _replace_none_by_given(legtag,self.parent_tags[0])
         self.child_pdata[legtag].set_legend_all(taglab=True,
                                             tag_seq=legtagseq,**kwargs)
 
@@ -4222,7 +4258,8 @@ class NestPdata(object):
                                index_func=None,
                                force_sharex=None,
                                ignore_index=False,
-                               sharexlabel=False):
+                               sharexlabel=False,
+                               index_xyname=None):
         """
         Create a NestPdata object from a dictionary of dataframe or pandas
             panel data.
@@ -4240,6 +4277,8 @@ class NestPdata(object):
             transform the index to desired sharex xaxis, force_sharex
             is used to force write the Pdata shared xaxis.
         ignore_index: True to use range(len(df)) as the forced share x value.
+        index_xyname: a 2-length tuple, indicating the index names for x/y values
+            of the Pdata.
 
         Notes:
         ------
@@ -4267,13 +4306,15 @@ class NestPdata(object):
                                     df_func=df_func,
                                     index_func=index_func,
                                     force_sharex=force_sharex,
-                                    ignore_index=ignore_index)
+                                    ignore_index=ignore_index,
+                                    index_xyname=index_xyname)
         npd = NestPdata(pddic)
 
         if isinstance(dict_dataframe,pa.Panel) and sharexlabel:
+            panel = dict_dataframe
             npd._sharex = True
-            npd._sharexlabel = map(str,dict_dataframe.major_axis.tolist())
-            #npd.add_attr_by_tag(x=np.ara)
+            npd._sharexlabel = map(str,panel.major_axis.tolist())
+            npd.add_attr_by_tag(x=np.arange(panel.shape[1])*panel.shape[2])
 
         #npd.set_parent_tag_order(ptags)
         return npd
@@ -5384,6 +5425,13 @@ class NestMdata(object):
             dt.set_xlabel(self.child_tags,labelpad=xlabelpad,**xlabelkw)
             dt.apply(lambda ax:ax.xaxis.set_label_position('top'))
             self.lax2D.child_ix(self.child_tags[0]).set_ylabel(self.parent_tags,labelpad=ylabelpad,**ylabelkw)
+
+    def apply_function(self,func=None):
+        """
+        """
+        for ptag,cmd in self.child_mdata.items():
+            cmd.apply_function(func=func,copy=False)
+
 
 
 class PolyData(Pdata):
