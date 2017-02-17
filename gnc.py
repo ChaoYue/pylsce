@@ -533,6 +533,7 @@ class NcWrite(object):
             else:
                 if create_unlimited:
                     self.rootgrp.createDimension(dimname,None)
+                    self.timedim_name=dimname
         if copy_dimvar:
             self._copy_dimvar_from_grp(grp,copy_timevar=copy_timevar,
                                        dims_exclude=dims_exclude)
@@ -1792,6 +1793,8 @@ class Ncdata(object):
 
         d0=self.d0
         d1=self.d1
+        pft_length = d1.__dict__[name_vegetmax].shape[0]
+
         print "*******PFT VEGET_MAX weighted sum begin******"
         for var in varlist:
             if var not in ['VEGET_MAX','vegetfrac','maxvegetfrac']:
@@ -1841,9 +1844,24 @@ class Ncdata(object):
                     if 'PFT' not in d0.__dict__[var].dimensions and 'veget' not in d0.__dict__[var].dimensions:
                         self.pftsum.__dict__[var]=d1.__dict__[var][veget_npindex]
                     else:
-                        if print_info: print """Warning! Original var '{0}' has 3 dim but
-                                            PFT or veget is still one dimension""".format(var)
-                        self.pftsum.__dict__[var]=d1.__dict__[var][veget_npindex]
+                        # if there is a timevar and its length is
+                        # one, and the length if its first dim is of
+                        # pft_length, maybe this is still a variable with PFT as one
+                        # of its dimensions, so we do PFT weighting
+                        # here.
+                        if self.timevar is not None and len(self.timevar) == 1\
+                            and d1.__dict__[var].shape[0] == pft_length:
+
+                            veget_max=d1.__dict__[name_vegetmax][veget_npindex]
+                            vardata = d1.__dict__[var][veget_npindex]
+                            temp=vardata*veget_max
+                            temppftsum=np.ma.sum(temp,axis=0)
+                            self.pftsum.__dict__[var]=temppftsum
+
+                        else:
+                            if print_info: print """Warning! Original var '{0}' has 3 dim but
+                                                PFT or veget is still one dimension""".format(var)
+                            self.pftsum.__dict__[var]=d1.__dict__[var][veget_npindex]
 
                 #<=2 dim variable before squeeze
                 else:
@@ -3446,9 +3464,15 @@ class Ncdata(object):
             self.d1.__dict__['WOODMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB
             self.d1.__dict__['WOODMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE
 
+        for varname in ['WOODMASS_BE','WOODMASS_AB','WOODMASS']:
+            self.d0.__dict__[varname] = self.d1.__dict__[varname]
+            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['SAP_M_AB'].dimensions
+            self.varlist.append(varname)
+
+
     def OrcBio_get_bmab(self):
         """
-        Calculate above- and belowground biomass carbon.
+        Calculate above- and belowground biomass carbon. This follows the litter allocation in ORCHIDEE.
         """
         varlist = ['SAP_M_AB','SAP_M_BE','HEART_M_AB','HEART_M_BE','LEAF_M','ROOT_M','FRUIT_M','RESERVE_M']
         if self.largefile:
@@ -3459,6 +3483,11 @@ class Ncdata(object):
         else:
             self.d1.__dict__['BIOMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB + self.d1.LEAF_M + self.d1.FRUIT_M + self.d1.RESERVE_M
             self.d1.__dict__['BIOMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE + self.d1.ROOT_M
+
+        for varname in ['BIOMASS_BE','BIOMASS_AB']:
+            self.d0.__dict__[varname] = self.d1.__dict__[varname]
+            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LEAF_M'].dimensions
+            self.varlist.append(varname)
 
     def OrcBio_get_litterab(self):
         varlist = ['LITTER_STR_AB','LITTER_STR_BE','LITTER_MET_AB','LITTER_MET_BE']
@@ -3472,6 +3501,11 @@ class Ncdata(object):
             self.d1.__dict__['LITTER_AB'] = self.d1.LITTER_STR_AB + self.d1.LITTER_MET_AB
             self.d1.__dict__['LITTER_BE'] = self.d1.LITTER_STR_BE + self.d1.LITTER_MET_BE
             self.d1.__dict__['LITTER'] = self.d1.__dict__['LITTER_AB'] + self.d1.__dict__['LITTER_BE']
+
+        for varname in ['LITTER_BE','LITTER_AB','LITTER']:
+            self.d0.__dict__[varname] = self.d1.__dict__[varname]
+            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LITTER_STR_AB'].dimensions
+            self.varlist.append(varname)
 
     def OrcBio_get_autoresp(self):
         varlist = ['MAINT_RESP','GROWTH_RESP']
