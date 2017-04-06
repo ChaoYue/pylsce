@@ -89,4 +89,6 @@ vars_LUCsource = ['CONVFLUX','CFLUX_PROD10','CFLUX_PROD100']
 vars_LUC = ['CONVFLUX_LCC','CONVFLUX_HAR','CFLUX_PROD10_LCC','CFLUX_PROD10_HAR','CFLUX_PROD100_LCC','CFLUX_PROD100_HAR']
 vars_prod = ['PROD10_LCC','PROD10_HAR','PROD100_LCC','PROD100_HAR']
 
+vars_diagose_fire = ['D_AREA_BURNT','D_NUMFIRE','D_FDI','ROS_F','LITTER_CONSUMP','CROWN_CONSUMP','CO2_FIRE',
+                     'mean_fire_size','mean_fire_size_or','char_dens_fuel_ave','dead_fuel','dead_fuel_all']
 

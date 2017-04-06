@@ -1717,7 +1717,7 @@ def ndarray_regrid(arr,numlat=2,numlon=2,weight=None,dense=False):
     -----------
     dense: True to make the grid denser, False for more sparse.
     weight: the weight factor when making the grid more sparse, can only
-        be 2-dim array.
+        be 2-dim array. weight is not used when dense=True
     """
     if np.ndim(arr) == 3:
         shape = arr.shape

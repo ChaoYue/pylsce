@@ -3479,12 +3479,14 @@ class Ncdata(object):
             self.retrieve_variables(varlist)
             self.d1.__dict__['BIOMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB + self.d1.LEAF_M + self.d1.FRUIT_M + self.d1.RESERVE_M
             self.d1.__dict__['BIOMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE + self.d1.ROOT_M
+            self.d1.__dict__['BIOMASS'] = self.d1.BIOMASS_AB + self.d1.BIOMASS_BE
             self.remove_variables(varlist)
         else:
             self.d1.__dict__['BIOMASS_AB'] = self.d1.SAP_M_AB + self.d1.HEART_M_AB + self.d1.LEAF_M + self.d1.FRUIT_M + self.d1.RESERVE_M
             self.d1.__dict__['BIOMASS_BE'] = self.d1.SAP_M_BE + self.d1.HEART_M_BE + self.d1.ROOT_M
+            self.d1.__dict__['BIOMASS'] = self.d1.BIOMASS_AB + self.d1.BIOMASS_BE
 
-        for varname in ['BIOMASS_BE','BIOMASS_AB']:
+        for varname in ['BIOMASS_BE','BIOMASS_AB','BIOMASS']:
             self.d0.__dict__[varname] = self.d1.__dict__[varname]
             self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LEAF_M'].dimensions
             self.varlist.append(varname)

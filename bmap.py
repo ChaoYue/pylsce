@@ -188,9 +188,9 @@ class gmap(object):
 
                 if gridstep is not None and gridstep!=False:
                     m.drawparallels(np.arange(mapbound['para0'],90.01,gridstep[0]),
-                                    labels=[1,0,0,0],fontsize=10)
+                                    labels=[1,0,0,0],fontsize=8,linewidth=0.5,color='0.7')
                     m.drawmeridians(np.arange(-180.,181.,gridstep[1]),
-                                    labels=[0,0,0,0],fontsize=10)
+                                    labels=[0,0,0,0],fontsize=8,linewidth=0.5,color='0.7')
                 #make the grid
                 lat1=mapbound['boundinglat']
                 latind=np.nonzero(lat>=lat1)[0]
@@ -698,6 +698,7 @@ class mapcontourf(object):
         self.ax = mgmap.m.ax
         self.trans_base_list = trans_base_list
         self.gmap = mgmap
+        self.pdata = pdata
 
         if levels is None:
             pass
@@ -755,6 +756,8 @@ class mapimshow(object):
                  show_colorbar=True,
                  smartlevel=False,
                  levels=None,data_transform=False,
+                 interpolation='none',
+                 extend='neither',
                  colorbardic={},
                  cbarkw={},
                  gmapkw={},
@@ -775,9 +778,27 @@ class mapimshow(object):
                                        smartlevel=smartlevel,
                                        data_transform=data_transform,
                                        gmapkw=gmapkw,
-                                       ax=ax)
+                                       ax=ax,
+                                       extend=extend)
 
-        cs=mgmap.m.imshow(pdata,cmap=cmap,origin='upper',*args,**kwargs)
+        # 2017-02-15
+        # Here is to accommodate the case of data_transform=True, in
+        # this case before of calculation error, the minimum value in
+        # pdata is sometimes a little bigger than plotlev[0]. This makes
+        # plotlev[0] is not displayed on the colorbar (because the
+        # minimum value of pdata is bigger), and the display of plotlab
+        # will shift by one tick in this case.
+        if plotlev is not None:
+            vmin = plotlev[0]
+            vmax = plotlev[-1]
+        else:
+            vmin = None
+            vmax = None
+
+        cs=mgmap.m.imshow(pdata,cmap=cmap,origin='upper',
+                          interpolation=interpolation,
+                          vmin=vmin,vmax=vmax,
+                          *args,**kwargs)
 
         cbar = _set_colorbar(mgmap.m,cs,
                              colorbardic=colorbardic,
@@ -799,6 +820,103 @@ class mapimshow(object):
         self.ax = mgmap.m.ax
         self.trans_base_list = trans_base_list
         self.gmap = mgmap
+        self.pdata = pdata
+
+class mappcolormesh(object):
+    """
+    Purpose: plot a map on cyl projection.
+    Arguments:
+        ax --> An axes instance
+        lat,lon --> geographic coordinate variables;
+        mapbound --> tuple containing (lat1,lat2,lon1,lon2);
+                lat1 --> lower parallel; lat2 --> upper parallel;
+                lon1 --> left meridian; lon2 --> right meridian;
+                default 'all' means plot the extent of input lat, lon
+                coordinate variables;
+        gridstep --> the step for parallel and meridian grid for the map,
+            tuple containing (parallel_step, meridian_step).
+        vmin,vmax --> as in plt.imshow function
+        data --> numpy array with dimension of len(lat)Xlen(lon)
+        shift --> boolean value. False for longtitude data ranging [-180,180];
+            for longtitude data ranging [0,360] set shift to True if
+            a 180 east shift is desired.
+
+    args,kwargs: for plt.imshow
+    """
+    def __init__(self,data=None,lat=None,lon=None,ax=None,
+                 rlat=None,rlon=None,
+                 projection='cyl',mapbound='all',
+                 gridstep=(30,30),shift=False,map_threshold=None,
+                 cmap=None,colorbarlabel=None,forcelabel=None,
+                 show_colorbar=True,
+                 smartlevel=False,
+                 levels=None,data_transform=False,
+                 interpolation='none',
+                 extend='neither',
+                 colorbardic={},
+                 cbarkw={},
+                 gmapkw={},
+                 *args,
+                 **kwargs):
+
+        (mgmap,pdata,plotlev,plotlab,extend,
+         trans_base_list,data_transform) = \
+            _generate_map_prepare_data(data=data,lat=lat,lon=lon,
+                                       rlat=rlat,rlon=rlon,
+                                       projection=projection,
+                                       mapbound=mapbound,
+                                       gridstep=gridstep,
+                                       shift=shift,
+                                       map_threshold=map_threshold,
+                                       levels=levels,
+                                       cmap=cmap,
+                                       smartlevel=smartlevel,
+                                       data_transform=data_transform,
+                                       gmapkw=gmapkw,
+                                       ax=ax,
+                                       extend=extend)
+
+        # 2017-02-15
+        # Here is to accommodate the case of data_transform=True, in
+        # this case before of calculation error, the minimum value in
+        # pdata is sometimes a little bigger than plotlev[0]. This makes
+        # plotlev[0] is not displayed on the colorbar (because the
+        # minimum value of pdata is bigger), and the display of plotlab
+        # will shift by one tick in this case.
+        if plotlev is not None:
+            vmin = plotlev[0]
+            vmax = plotlev[-1]
+        else:
+            vmin = None
+            vmax = None
+
+        cs=mgmap.m.pcolormesh(mgmap.lonpro,mgmap.latpro,pdata,
+                              cmap=cmap,
+                              vmin=vmin,vmax=vmax,
+                              *args,**kwargs)
+
+        cbar = _set_colorbar(mgmap.m,cs,
+                             colorbardic=colorbardic,
+                             levels=plotlev,
+                             data_transform=data_transform,
+                             colorbarlabel=colorbarlabel,
+                             trans_base_list=trans_base_list,
+                             forcelabel=forcelabel,
+                             plotlev=plotlev,
+                             plotlab=plotlab,
+                             cbarkw=cbarkw,
+                             show_colorbar=show_colorbar)
+
+        self.m = mgmap.m
+        self.cs = cs
+        self.cbar = cbar
+        self.plotlev = plotlev
+        self.plotlab = plotlab
+        self.ax = mgmap.m.ax
+        self.trans_base_list = trans_base_list
+        self.gmap = mgmap
+        self.pdata = pdata
+
 
 def mcon_set_clim_color(mcon,over=(None,None),under=(None,None)):
     """

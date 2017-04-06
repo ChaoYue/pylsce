@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
-from osgeo import ogr
-from osgeo import gdal
+try:
+    from osgeo import ogr
+    from osgeo import gdal
+except ImportError:
+    print "osgeo not installed, ogr and gdal not imported!"
+
 import matplotlib as mat
 import pandas as pa
 import numpy as np
@@ -294,7 +298,9 @@ def dataframe_column_from_array_by_geoindex(geoindex,arrdic):
             dic[colname] = [arr[sl] for sl in geoindex]
         else:
             dic[colname] = [arr[sl] if arr.mask[sl] != True else None for sl in geoindex]
-    return pa.DataFrame(dic,index=geoindex)
+    dft = pa.DataFrame(dic,index=np.arange(len(geoindex)))
+    dft.insert(0,'geoindex',geoindex)
+    return dft
 
 def dataframe_build_geoindex_from_lat_lon(df,lat_name='lat',
                                           lon_name='lon',

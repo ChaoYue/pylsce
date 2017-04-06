@@ -495,6 +495,10 @@ class LabelAxes2D(object):
         else:
             raise ValueError("Not implemented")
 
+    @property
+    def figure(self):
+        return self.child_ix(self.child_tags[0]).figure
+
 def label_axl(axl,label,pos='ul',forcelabel=None,**kwargs):
     """
     Parameters:

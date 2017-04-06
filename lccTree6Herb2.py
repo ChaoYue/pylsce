@@ -176,27 +176,32 @@ def get_age_fraction_vegetmax(vegmax):
     ----------
     vegmax: The 65-length PFT should be the second dimension
     """
-    frac_F = OrderedDict()
+    if vegmax.ndim == 4:
+        frac_F = OrderedDict()
 
-    frac_F['Bareland'] = vegmax[:,0:1,...].sum(axis=1)
+        frac_F['Bareland'] = vegmax[:,0:1,...].sum(axis=1)
 
-    frac_F['Forest_Age_1'] = vegmax[:,np.arange(ia2_1,ia9_6,6),...].sum(axis=1)
-    frac_F['Forest_Age_2'] = vegmax[:,np.arange(ia2_2,ia9_6,6),...].sum(axis=1)
-    frac_F['Forest_Age_3'] = vegmax[:,np.arange(ia2_3,ia9_6,6),...].sum(axis=1)
-    frac_F['Forest_Age_4'] = vegmax[:,np.arange(ia2_4,ia9_6,6),...].sum(axis=1)
-    frac_F['Forest_Age_5'] = vegmax[:,np.arange(ia2_5,ia9_6,6),...].sum(axis=1)
-    frac_F['Forest_Age_6'] = vegmax[:,np.arange(ia2_6,ia9_6+1,6),...].sum(axis=1)
+        frac_F['Forest_Age_1'] = vegmax[:,np.arange(ia2_1,ia9_6,6),...].sum(axis=1)
+        frac_F['Forest_Age_2'] = vegmax[:,np.arange(ia2_2,ia9_6,6),...].sum(axis=1)
+        frac_F['Forest_Age_3'] = vegmax[:,np.arange(ia2_3,ia9_6,6),...].sum(axis=1)
+        frac_F['Forest_Age_4'] = vegmax[:,np.arange(ia2_4,ia9_6,6),...].sum(axis=1)
+        frac_F['Forest_Age_5'] = vegmax[:,np.arange(ia2_5,ia9_6,6),...].sum(axis=1)
+        frac_F['Forest_Age_6'] = vegmax[:,np.arange(ia2_6,ia9_6+1,6),...].sum(axis=1)
 
-    frac_F['Grassland_Age_1'] = vegmax[:,[ia10_1,ia12_1],...].sum(axis=1)
-    frac_F['Grassland_Age_2'] = vegmax[:,[ia10_2,ia12_2],...].sum(axis=1)
+        frac_F['Grassland_Age_1'] = vegmax[:,[ia10_1,ia12_1],...].sum(axis=1)
+        frac_F['Grassland_Age_2'] = vegmax[:,[ia10_2,ia12_2],...].sum(axis=1)
 
-    frac_F['Pasture_Age_1'] = vegmax[:,[ia11_1,ia13_1],...].sum(axis=1)
-    frac_F['Pasture_Age_2'] = vegmax[:,[ia11_2,ia13_2],...].sum(axis=1)
+        frac_F['Pasture_Age_1'] = vegmax[:,[ia11_1,ia13_1],...].sum(axis=1)
+        frac_F['Pasture_Age_2'] = vegmax[:,[ia11_2,ia13_2],...].sum(axis=1)
 
-    frac_F['Crop_Age_1'] = vegmax[:,[ia14_1,ia15_1],...].sum(axis=1)
-    frac_F['Crop_Age_2'] = vegmax[:,[ia14_2,ia15_2],...].sum(axis=1)
+        frac_F['Crop_Age_1'] = vegmax[:,[ia14_1,ia15_1],...].sum(axis=1)
+        frac_F['Crop_Age_2'] = vegmax[:,[ia14_2,ia15_2],...].sum(axis=1)
 
-    return frac_F
+        return frac_F
+    elif vegmax.ndim == 3:
+        frac_F = get_age_fraction_vegetmax(vegmax[np.newaxis,...])
+        frac_F = pb.Dic_Apply_Func(lambda x:x[0],frac_F)
+        return frac_F
 
 def get_veget_fraction_vegetmax(vegmax):
     """

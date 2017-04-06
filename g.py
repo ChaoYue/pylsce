@@ -60,7 +60,7 @@ c2={    'db':'#000080',
 
 
 chtml=['Red','White','Cyan','Silver','Blue','Grey','DarkBlue','Black','LightBlue','Orange','Purple','Brown','Yellow','Maroon','Lime','Green','Fuchsia','Olive']
-def show_html_color():
+def show_html_color(chtml):
     fig,ax=Create_1Axes()
     for i in range(len(chtml)):
         ax.plot(np.arange(10)+2*i,chtml[i],lw=3)
@@ -2398,7 +2398,7 @@ def _get_axesrec_by_pos_offset(rec,pos,offset,width=None,height=None,
 
     if shift is not None:
         nx0 = nx0+shift[0]
-        xy0 = ny0+shift[1]
+        ny0 = ny0+shift[1]
 
     return (nx0,ny0,width,height)
 
@@ -2424,8 +2424,9 @@ def Axes_add_axes(relative=None,pos='right',offset=None,
         'above/below', width will be calculated as the same of
         the relative unless it's being forced.
     middle: boolean value. True to put the axes right in the middle.
-    shift: 2-len tuple of (right_shift,above_shift), use negative value
-        for the shift in reverse direction.
+    shift: 2-len tuple of (right_shift,above_shift) to move a little
+        the origin (lower left) of the new axes. Use negative value
+        for the shift to left or below.
 
     kwargs: kwargs used in mat.figure.Figure.add_axes
 
@@ -2476,7 +2477,8 @@ def Axes_remove_last_yticklabel(ax,ind=0):
     tlabels[ind] = ''
     ax.set_yticklabels(tlabels)
 
-def imshow(data,lognorm=False,ax=None,vmin=None,vmax=None,**kwargs):
+def imshow(data,lognorm=False,ax=None,vmin=None,vmax=None,
+           interpolation='none',**kwargs):
     if ax is None: fig,ax = Create_1Axes()
     if vmin is None: vmin = np.ma.min(data)
     if vmax is None: vmax = np.ma.max(data)

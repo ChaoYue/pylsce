@@ -316,7 +316,8 @@ def _treat_axes_dict(axdic,tagpos='ul',unit=None,xlim=None):
         if xlim is not None:
             axt.set_xlim(xlim)
 
-def _treat_taglist_by_tagpresurfix(taglist,tagprefix='',tagbracket='normal'):
+def _treat_taglist_by_tagpresurfix(taglist,tagprefix='',tagbracket='normal',
+                                   tagprefixnum=0):
     """
     Treat taglist by prefix or surfix to allow easy plotting.
 
@@ -326,21 +327,27 @@ def _treat_taglist_by_tagpresurfix(taglist,tagprefix='',tagbracket='normal'):
         1. default value is empty string.
         2. in case of 'alpha', alphabetic values will be appended.
            in case of 'Alpha', uppercase alphabetic values appended.
-        2. in case of 'numeric', numbers will be appended.
+        3. in case of 'numeric', numbers will be appended.
+
+    tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+        start with "c" rather than "a" when using the lowercase letter as
+        the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+        is 0-based, following the python indexing convention.
 
     tagbracket:
         1. default value is 'normal', i.e., "()" will be used.
     """
     import string
+    num = tagprefixnum
     if tagprefix == '':
         tagprefix_list = ['']*len(taglist)
     elif tagprefix == 'alpha':
-        tagprefix_list = string.ascii_letters[0:len(taglist)]
+        tagprefix_list = string.ascii_letters[num:len(taglist)+num]
     elif tagprefix == 'Alpha':
-        tagprefix_list = string.ascii_letters[0:len(taglist)]
+        tagprefix_list = string.ascii_letters[num:len(taglist)+num]
         tagprefix_list = map(string.upper,tagprefix_list)
     elif tagprefix == 'numeric':
-        tagprefix_list = map(str,range(1,len(taglist)+1))
+        tagprefix_list = map(str,range(num+1,len(taglist)+num+1))
     else:
         raise ValueError("wrong tagprefix value!")
 
@@ -394,7 +401,9 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
                          unit=None, xlim=None,
                          subkw={},tagcolor='b',
                          tagtxtkw={},
-                         tagprefix='',tagbracket='normal')
+                         tagprefix='',
+                         tagprefixnum=0,
+                         tagbracket='normal')
 
     extra_keylist = pb.StringListAnotB(kwargs.keys(),paradict.keys())
     if len(extra_keylist) != 0:
@@ -419,6 +428,7 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
     subkw = paradict['subkw']
     tagcolor = paradict['tagcolor']
     tagprefix = paradict['tagprefix']
+    tagprefixnum = paradict['tagprefixnum']
     tagbracket = paradict['tagbracket']
     tagtxtkw = paradict['tagtxtkw']
 
@@ -443,7 +453,8 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
 
     #treat the tagprefix
     tags_final = _treat_taglist_by_tagpresurfix(axdic.keys(),
-                    tagprefix=tagprefix, tagbracket=tagbracket)
+                    tagprefix=tagprefix, tagprefixnum=tagprefixnum,
+                    tagbracket=tagbracket)
     tags_final_dic = dict(zip(axdic.keys(),tags_final))
 
     #print 'default_tagpos before',default_tagpos
@@ -747,6 +758,7 @@ class Pdata(object):
                         if sharexlabel:
                             pd.add_entry_sharex_noerror_by_dic(df,x=np.arange(len(df))*len(df.columns))
                         else:
+                            #1/0
                             pd.add_entry_sharex_noerror_by_dic(df,x=df.index.values)
                 else:
                     pd.add_entry_sharex_noerror_by_dic(df,x=index_func(df.index))
@@ -4835,9 +4847,12 @@ class Mdata(Pdata):
 
     def __setitem__(self,key,value):
         tag1 = self.taglist[0]
-        self.add_tag(key)
-        self.add_array(value,key)
-        self.add_lat_lon(tag=key,lat=self.data[tag1]['lat'],lon=self.data[tag1]['lon'])
+        if key in self.taglist:
+            self.data[key]['array'] = value
+        else:
+            self.add_tag(key)
+            self.add_array(value,key)
+            self.add_lat_lon(tag=key,lat=self.data[tag1]['lat'],lon=self.data[tag1]['lon'])
 
     def add_entry_share_latlon_bydic(self,ydic,lat=None,lon=None):
         for tag,ydata in ydic.items():
@@ -5341,6 +5356,9 @@ class Mdata(Pdata):
         ncfile.close()
 
     def get_zonal_as_dataframe(self,mode='mean'):
+        """
+        mode: 'mean' or 'sum', both being simple arithmetic operation.
+        """
         dic = {}
         for tag in self._taglist:
             arr = self.data[tag]['array']
