@@ -1310,13 +1310,23 @@ class Pdata(object):
 
         Notes:
         ------
-        1. If tag_attr_value is a dict, the taglist will not be used at all.
-            the tag_attr_value will be returned without any change.
+        This is a very generic function, depending on provided inputs:
+          1. If tag_attr_value is a dict, then neither taglist nor tagkw will
+             be used. the tag_attr_value will be returned without any change.
+          2. If tag_attr_value is a list, either expand only to an equal-length of
+             subtags when tagkw is a string, or expanded to all tags.
+          3. If tag_attr_value is a list of 2-len tuples, either expanded to
+             a subtaglist when tagkw is True, or just be returned as a dict.
         '''
+        if tagkw == True:
+            if not isinstance(tag_attr_value,list) or not isinstance(tag_attr_value[0],tuple):
+                raise TypeError("""True value of tagkw makes sense only when
+                                   tag_attr_value is a list of (tagkw,attr_value)""")
+
         #This if/else build the final dic to be used.
         if not isinstance(tag_attr_value,dict):
             if isinstance(tag_attr_value,list):
-                #tag_attr_value is a list of (tag,attr_value) tuples.
+                # (i) tag_attr_value is a list of (tag,attr_value) tuples.
                 if isinstance(tag_attr_value[0],tuple):
                     #tag is keyword
                     if tagkw==True:
@@ -1329,12 +1339,23 @@ class Pdata(object):
                     else:
                         raise TypeError('''tagkw must be True or False
                             when tag_attr_value is a list''')
-                #a list of values
+                # (ii) a list of values
                 else:
                     if len(tag_attr_value)!=len(taglist):
-                        raise ValueError('''taglist has len '{0}' but input
-                            list len is {1}'''.format(len(taglist),
-                            len(tag_attr_value)))
+                        #input list usable after tagkw expansion
+                        if isinstance(tagkw,str):
+                            taglist_bykeywd = FilterStringList(tagkw,taglist)
+                            if len(taglist_bykeywd) != len(tag_attr_value):
+                                raise ValueError("""Lenght of input list is not 
+                                    equal to length of sub-tags after tagkw expansion.""")
+                            else:
+                                final_dic=dict(zip(taglist_bykeywd,tag_attr_value))
+
+                        else:
+                            raise ValueError('''taglist has len '{0}' but input
+                                list len is {1}'''.format(len(taglist),
+                                len(tag_attr_value)))
+                    #input list of values directly usable for the input taglist
                     else:
                         final_dic=dict(zip(taglist,tag_attr_value[:]))
 
@@ -1371,19 +1392,24 @@ class Pdata(object):
         Note the keyvalue is very flexible:
         1. In case of a single value, it will be broadcast to all tags for the
             attr concerned.
+           e.g., bwidth=1
         2. In case of a list with lenght equal to number of tags, it will be
-            add to tags by sequence of Pdata._taglist
+            add to tags by sequence of Pdata._taglist.
+           e.g., bwidth=[0.5,0.5,1]
         3. In case of a dictionary of tag/attr_value pairs, add attr_value
             accordingly to the tag corresponded.
+           e.g., bwidth=dict(tag1=1,tag2=0.5)
         4. In case of a list of (tag,value) tuples:
             4.1 if tagkw==True (tagkw is only for this purpose):
                 treat the tag in tag/attr_value as tag_keyword to set the same
                 attr_value for all tags that contains this tag_keyword.
+                e.g., bwidth=[('dry',0.5),('wet',1)]
             4.2 if tagkw==False:
                 treat the tag in tag/attr_value as a full tag and will not do
                 the keyword search, it will change the tuple directly to a
                 dictionary and apply the dictionary in seting tag/attr_value
                 directly.
+                e.g., bwidth= [('tag1',1),('tag2',2)]
 
         Available keys are:
         **extra base attribute:
