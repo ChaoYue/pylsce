@@ -391,6 +391,11 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
         tagbracket:
             1. default value is 'normal', i.e., "()" will be used.
         tagcolor: the tag color, could be list.
+
+        tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+            start with "c" rather than "a" when using the lowercase letter as
+            the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+            is 0-based, following the python indexing convention.
     """
     paradict = dict(force_axs=None,tagseq=None,
                          default_tagseq=None,
@@ -2672,6 +2677,11 @@ class Pdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         '''
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,**kwargs)
@@ -2736,6 +2746,11 @@ class Pdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,**kwargs)
@@ -2792,6 +2807,11 @@ class Pdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         '''
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,**kwargs)
@@ -3594,6 +3614,11 @@ class NestPdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                             default_tagseq=self.parent_tags,
@@ -3735,6 +3760,11 @@ class NestPdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                             default_tagseq=self.parent_tags,
@@ -3801,6 +3831,11 @@ class NestPdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
 
         # handle the left and right tags
@@ -3891,6 +3926,11 @@ class NestPdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                             default_tagseq=self.parent_tags,
@@ -4010,6 +4050,11 @@ class NestPdata(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                             default_tagseq=self.parent_tags, **kwargs)
@@ -4476,6 +4521,11 @@ class Pdata3D(object):
                 tagbracket:
                     1. default value is 'normal', i.e., "()" will be used.
                     subkw: kwarg in plt.subplots function
+
+                tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                    start with "c" rather than "a" when using the lowercase letter as
+                    the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                    is 0-based, following the python indexing convention.
         """
         if axes_style == 'matrix':
             nrows = len(self.parent_tags)
@@ -4599,6 +4649,11 @@ class Pdata3D(object):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         """
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                             default_tagseq=self.labels,
@@ -4916,6 +4971,11 @@ class Mdata(Pdata):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwargs in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         '''
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,
@@ -4990,6 +5050,11 @@ class Mdata(Pdata):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwargs in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         '''
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,
@@ -5062,6 +5127,11 @@ class Mdata(Pdata):
             tagbracket:
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
         '''
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
                         default_tagseq=self._taglist,
