@@ -898,6 +898,34 @@ def Set_xaxis_month2year(ax,BeginYear,interval=1):
 
 Axes_set_xaxis_month2year = Set_xaxis_month2year
 
+
+def Axes_set_xaxis_day2year(ax,BeginYear=0,interval=1,numdays=365):
+    """
+    Purpose: set xaxis from day to year, ie. the daily data are used to
+        draw plots but the xaxis is displayed as year. So in this case the
+        xaxis must be integers.
+    Parameters:
+    -----------
+    BeginYear: the beginning year used to draw the xtickslabels.
+    interval: interval (No. of years) to jump when there are two many years.
+    numdays: number of days in one year.
+    """
+    x0=int(ax.get_xlim()[0])
+    x1=int(ax.get_xlim()[1])
+    numyear=np.floor(float(x1-x0+1)/numdays)+1
+
+    if interval == 1:
+        ax.xaxis.set_minor_locator(plt.MultipleLocator(2))
+        arr_tick = x0+np.arange(0,numyear)*numdays
+        xlabelarray = BeginYear+np.arange(0,numyear)
+    else:
+        ax.xaxis.set_minor_locator(plt.MultipleLocator(numdays))
+        arr_tick = x0+np.arange(0,numyear,interval)*numdays
+        xlabelarray = BeginYear+np.arange(0,numyear,interval)
+
+    ax.set_xticks(arr_tick,minor=False)
+    ax.set_xticklabels(xlabelarray.astype(int))
+
 def Set_Axes_Position(ax,pos,frac):
     """
     Purpose: Adjust the width or height of an axes instance
