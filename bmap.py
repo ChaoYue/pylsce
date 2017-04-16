@@ -783,21 +783,17 @@ class mapimshow(object):
 
         # 2017-02-15
         # Here is to accommodate the case of data_transform=True, in
-        # this case before of calculation error, the minimum value in
+        # this case because of calculation error, the minimum value in
         # pdata is sometimes a little bigger than plotlev[0]. This makes
         # plotlev[0] is not displayed on the colorbar (because the
         # minimum value of pdata is bigger), and the display of plotlab
         # will shift by one tick in this case.
         if plotlev is not None:
-            vmin = plotlev[0]
-            vmax = plotlev[-1]
-        else:
-            vmin = None
-            vmax = None
+            kwargs['vmin'] = plotlev[0]
+            kwargs['vmax'] = plotlev[-1]
 
         cs=mgmap.m.imshow(pdata,cmap=cmap,origin='upper',
                           interpolation=interpolation,
-                          vmin=vmin,vmax=vmax,
                           *args,**kwargs)
 
         cbar = _set_colorbar(mgmap.m,cs,

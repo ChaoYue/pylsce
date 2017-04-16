@@ -5082,6 +5082,8 @@ class Mdata(Pdata):
                                     *args,
                                     **imgkw)
             mapimgdic[tag] = mapimg
+            self._mdic[tag] = mapimg.m
+            self._gmapdic[tag] = mapimg.gmap
 
         self.axdic = axdic
         self.mapimgdic = mapimgdic
@@ -5245,7 +5247,7 @@ class Mdata(Pdata):
     def plot(self,x=None,y=None,index=False,hshift=None,vshift=None,
              *args,**kwargs):
         """
-        Plot on the map.
+        Plot on the map by calling plt.plot function for each axes.
         """
         xdic,ydic = self._treat_xy(x=x,y=y,index=index,hshift=hshift,vshift=vshift)
         for tag in xdic.keys():
@@ -5253,7 +5255,7 @@ class Mdata(Pdata):
 
     def plot_maskTrue(self,data=None,hshift=None,vshift=None,*args,**kwargs):
         """
-        Make plot for pixels that are True in the input data.
+        Make plot for pixels that are True in the input boolean data.
         """
         if not isinstance(data,dict):
             datadic = OrderedDict.fromkeys(self.taglist,data)

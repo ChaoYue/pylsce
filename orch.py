@@ -100,6 +100,8 @@ def dataframe_from_stomate(filepattern,largefile=True,multifile=True,
     filepattern: could be a single filename, or a file pattern
     out_timestep: the timestep of output file, used to provide information
         to properly scale the variable values, could be 'annual' or 'daily'.
+        when 'annual', flux_scale_factor = 365 will be used.
+
     dgvmadj: use DGVM adjustment, in this case tBIOMASS rathern than TOTAL_M
         is used.
     veget_npindex: passed to the function of get_pftsum:
