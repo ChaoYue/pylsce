@@ -1610,6 +1610,9 @@ class Ncdata(object):
         elif 'latvar' in self.varlist_all and 'lonvar' in self.varlist_all:
             self.latvar_name='latvar'
             self.lonvar_name='lonvar'
+        elif 'x' in self.varlist_all and 'y' in self.varlist_all:
+            self.latvar_name='y'
+            self.lonvar_name='x'
         else:
             raise ValueError('Default lat and lon names are not found in the data, please specify by add_latvar_lonvar_name, or update default list')
 
