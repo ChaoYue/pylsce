@@ -2303,7 +2303,8 @@ class Ncdata(object):
             raise TypeError("keyword index must boolean type!")
 
         x,y = self.m(lon,lat)
-        self.m.scatter(x,y,*args,**kwargs)
+        sc = self.m.scatter(x,y,*args,**kwargs)
+        self.sc = sc
 
     def add_Rectangle(self,(lat1,lon1),(lat2,lon2),index=False,
                       **kwargs):
