@@ -208,6 +208,7 @@ def Add_Linearring_to_Axes(ax,ring,facecolor='0.7',edgecolor='k',
 
     Parameters:
     -----------
+    ring: the same as `verts` in mat.collections.PolyCollection.
     transfunc: functions used for spatial transformation, they should receive
         tuple as parameter and return tuple.
     """

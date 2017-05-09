@@ -160,8 +160,8 @@ class gmap(object):
             if gridstep is not None and gridstep!=False:
                 para_range=np.arange(near5even(lat1),near5even(lat2)+0.1,gridstep[0])
                 meri_range=np.arange(near5even(lon1),near5even(lon2)+0.1,gridstep[1])
-                m.drawparallels(para_range,labels=[1,0,0,0])
-                m.drawmeridians(meri_range,labels=[0,0,0,1])
+                m.drawparallels(para_range,labels=[1,0,0,0],color='0.7')
+                m.drawmeridians(meri_range,labels=[0,0,0,1],color='0.7')
 
             #make the grid for mapping ndarray
             latind=np.nonzero((lat>=lat1)&(lat<=lat2))[0]
