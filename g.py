@@ -915,7 +915,7 @@ def Axes_set_xaxis_day2year(ax,BeginYear=0,interval=1,numdays=365):
     numyear=np.floor(float(x1-x0+1)/numdays)+1
 
     if interval == 1:
-        ax.xaxis.set_minor_locator(plt.MultipleLocator(2))
+        ax.xaxis.set_minor_locator(plt.MultipleLocator(numdays))
         arr_tick = x0+np.arange(0,numyear)*numdays
         xlabelarray = BeginYear+np.arange(0,numyear)
     else:
