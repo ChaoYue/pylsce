@@ -379,6 +379,7 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
         ncols: num of columns when force_axs is None
         sharex,sharey: the same as plt.subplots
         tagpos: the position of parent_tag
+        tagtxtkw: kwargs for tag text.
         column_major: True if parent tags are deployed in column-wise.
         unit: used as ylabel for each subplot
         xlim: xlim
@@ -2670,6 +2671,7 @@ class Pdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag; None or False to suppress.
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -2738,6 +2740,7 @@ class Pdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag; None or False to suppress.
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -2799,6 +2802,7 @@ class Pdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag; None or False to suppress.
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -3606,6 +3610,7 @@ class NestPdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -3752,6 +3757,7 @@ class NestPdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -3824,6 +3830,7 @@ class NestPdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -3919,6 +3926,7 @@ class NestPdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -4054,6 +4062,7 @@ class NestPdata(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -4524,6 +4533,7 @@ class Pdata3D(object):
                 ncols: num of columns when force_axs is None
                 sharex,sharey: the same as plt.subplots
                 tagpos: the position of parent_tag
+                tagtxtkw: kwargs for tag text.
                 column_major: True if parent tags are deployed in column-wise.
                 unit: used as ylabel for each subplot
                 xlim: xlim
@@ -4652,6 +4662,7 @@ class Pdata3D(object):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -4975,6 +4986,7 @@ class Mdata(Pdata):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
@@ -5133,6 +5145,7 @@ class Mdata(Pdata):
             ncols: num of columns when force_axs is None
             sharex,sharey: the same as plt.subplots
             tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
             column_major: True if parent tags are deployed in column-wise.
             unit: used as ylabel for each subplot
             xlim: xlim
