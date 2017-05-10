@@ -1115,8 +1115,12 @@ class Pdata(object):
 
     def collapse_attr_to_tag(self,attrlist):
         """
-        Set attribute values as y-data of new tags. Only applies for case
-            with single tag.
+        Set attribute values as y-data of new tags. Only applies for Pdata
+            object with a single tag.
+
+        Notes:
+          1. 'y' in attrlist is not necessary, it will be automatically
+            added in the new generated Pdata under the original tag name.
         """
         pd = self.copy()
 
@@ -4016,19 +4020,31 @@ class NestPdata(object):
 
 
     def plot_stackline_split_parent_tag(self,
-                        fillkw={}, legdic={},
-                        stackw={}, legtag=None,
+                        fillkw={},tagseq=None,
+                        bottom_fill=True,colors=None,
+                        legtag=None,
+                        legtagseq=None, legkw={},
                         **kwargs):
         """
         Plot for each parent tag a stackline plot in a subplot
 
         Parameters:
         -----------
-        fillkw: kwargs in plt.fill_between function
-        legdic: kwargs in plt.legend function
-        stackw: parameters in Pdata.Pdata.plot_stackline function,
-            including: tagseq(child tags),colors,bottom_fill,
-                       legend(boolean)
+        stackline-related:
+            tagseq: the child tag list for which stacked line plot will be made.
+                Notice the sequece for tagseq is from bottom to the top.
+            colors: color list, the length should be equal to the number of
+                filled area. In case of bottom_fill == True, len(colors) should
+                be equal to len(tagseq), otherwise should be equal to
+                len(tagseq)-1.
+            bottom_fill: set True if the area between xaxis and the bottom
+                line (the first tag) is to be filled.
+            fillkw: kwargs in plt.fill_between function
+
+        legend-related:
+            legtag: the parent tag used to plot the legend.
+            legtagseq: child tag sequence used in the legend.
+            legkw: kwargs in plt.legend function.
 
         kwargs:
             force_axs: force the axes.
@@ -4061,9 +4077,8 @@ class NestPdata(object):
         for tag,axt in axdic.items():
             pd_temp = self.child_pdata[tag]
             pd_temp.plot_stackline(axes=axt, fillkw=fillkw,
-                                   legdic=legdic,
-                                   legend=False,
-                                   **stackw)
+                                   legend=False, tagseq=tagseq,
+                                   colors=colors, bottom_fill=bottom_fill)
         # set attributes
         self.axdic = axdic
         self.axes = axdic
