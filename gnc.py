@@ -3470,7 +3470,7 @@ class Ncdata(object):
 
         for varname in ['WOODMASS_BE','WOODMASS_AB','WOODMASS']:
             self.d0.__dict__[varname] = self.d1.__dict__[varname]
-            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['SAP_M_AB'].dimensions
+            #self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['SAP_M_AB'].dimensions
             self.varlist.append(varname)
 
 
@@ -3492,7 +3492,7 @@ class Ncdata(object):
 
         for varname in ['BIOMASS_BE','BIOMASS_AB','BIOMASS']:
             self.d0.__dict__[varname] = self.d1.__dict__[varname]
-            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LEAF_M'].dimensions
+            #self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LEAF_M'].dimensions
             self.varlist.append(varname)
 
     def OrcBio_get_litterab(self):
@@ -3510,7 +3510,7 @@ class Ncdata(object):
 
         for varname in ['LITTER_BE','LITTER_AB','LITTER']:
             self.d0.__dict__[varname] = self.d1.__dict__[varname]
-            self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LITTER_STR_AB'].dimensions
+            #self.d0.__dict__[varname].__dict__['dimensions'] = self.d0.__dict__['LITTER_STR_AB'].dimensions
             self.varlist.append(varname)
 
     def OrcBio_get_autoresp(self):
