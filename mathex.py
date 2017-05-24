@@ -2620,15 +2620,15 @@ def Panel4D_partial_corr(p4d,ycol,xcols):
     Calculate partial correlation coef and p-values using
         mathex.dataframe_reg_OLS_multivar and mathex.dataframe_partial_corr.
         Returns a Panel4D, with labels and items unchanged; major_axis as
-        regression variables, minor_axis as statistical variables (r_partial,
+        regression independent variables, minor_axis as statistical variables (r_partial,
         p-value etc.)
 
     Parameters:
     -----------
     p4d: Panel4D object, with major_axis as observations, minor_axis as variables.
     xcols: columns (variables) serving as independent variables; could be a
-        subset list p4d.minor_axis
-    ycol: string. Dependent variable.
+        subset list p4d.minor_axis.
+    ycol: string. Dependent variable, one member of p4d.minor_axis.
     """
     cols = xcols+[ycol]
     dic2 = OrderedDict()

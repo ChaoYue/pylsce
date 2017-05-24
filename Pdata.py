@@ -483,6 +483,88 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
     return axdic
 
 
+def build_lax2D(add_label=True,
+                row_labels=None,col_labels=None,
+                col_pos='ouc',col_color='k',col_txtkw={},
+                row_pos=(-0.2,0.5),row_color='k',row_txtkw={},
+                axes_style='matrix',
+                **kwargs):
+    """
+    Build a lax2D project to plot. First level of the axes is column labels,
+    second level is row labels.
+
+
+    Parameters:
+    -----------
+    axes_style == 'matrix':
+
+    axes_style == 'icecore':
+        kwargs:
+            force_axs: force the axes.
+            tagseq: the sequence for parent tags.
+            tagcolor: the tag color, could be list.
+            force_axdic: force a dictionary of parent_tag/axes pairs.
+            ncols: num of columns when force_axs is None
+            sharex,sharey: the same as plt.subplots
+            tagpos: the position of parent_tag
+            tagtxtkw: kwargs for tag text.
+            column_major: True if parent tags are deployed in column-wise.
+            unit: used as ylabel for each subplot
+            xlim: xlim
+            plotkw: the keyword used in plt.plot function.
+            tagprefix:
+                1. default value is empty string.
+                2. in case of 'alpha', alphabetic values will be appended.
+                   in case of 'Alpha', uppercase alphabetic values appended.
+                2. in case of 'numeric', numbers will be appended.
+            tagbracket:
+                1. default value is 'normal', i.e., "()" will be used.
+                subkw: kwarg in plt.subplots function
+
+            tagprefixnum: the starting index for tagprefix. Eg., if one wants to
+                start with "c" rather than "a" when using the lowercase letter as
+                the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
+                is 0-based, following the python indexing convention.
+    """
+    if axes_style == 'matrix':
+        ncols = len(col_labels)
+        nrows = len(row_labels)
+
+        # note here column_major is False
+        axdic = _creat_dict_of_tagaxes_by_tagseq_g(
+                            default_tagseq=['dummy%s'%s for s in range(nrows*ncols)],
+                            ncols=ncols,
+                            tagpos=False,
+                            **kwargs)
+        axs = np.array(axdic.values()).reshape(nrows,ncols,order='C')
+        lax2D = LabelAxes.LabelAxes2D.from_axes_matrix(axs,col_labels,
+                                                       row_labels,
+                                                       parent_as_column=True)
+
+        if add_label == True:
+            lax2D.add_parent_label(pos=col_pos,color=col_color,**col_txtkw)
+
+        lax = lax2D[col_labels[0]]
+        lax.add_label(pos=row_pos,color=row_color,**row_txtkw)
+
+    elif axes_style == 'icecore':
+        axdic = _creat_dict_of_tagaxes_by_tagseq_g(
+                            default_tagseq=col_labels,
+                            **kwargs)
+
+        lax = LabelAxes.LabelAxes(tags=axdic.keys(),axl=axdic.values())
+        dic = lax.build_icecore(num=len(row_labels),keys=row_labels[:])
+        lax2D = LabelAxes.LabelAxes2D(dic)
+
+        if add_label == True:
+            lax2D.add_parent_label(pos=col_pos,color=col_color,**col_txtkw)
+            for ptag,lax in lax2D.iteritems():
+                lax.add_label(pos=row_pos,color=row_color,**row_txtkw)
+    else:
+        raise ValueError("Unknown axes_style")
+
+    return lax2D
+
 def pleg_merge(*pdlist):
     """
     Return a merged ProxyLegend for the Pdata objects.
@@ -2969,7 +3051,7 @@ class Pdata(object):
                     tcdic = OrderedDict.fromkeys(taglist,textcolor)
 
         #handle line color
-        if color == True:
+        if color is True:
             lcdic = self.get_handle_colordic()
         else:
             lcdic = tools._propagate(self.taglist,color)
@@ -3588,6 +3670,44 @@ class NestPdata(object):
             pdata.add_entry_by_dic(**{newtag:new_entry})
         return pdata
 
+
+
+    def plot_matrix_axes(self,plotkw={},
+                         add_label=True,force_lax2D=None,
+                         col_pos='ouc',col_color='k',col_txtkw={},
+                         row_pos=(-0.2,0.5),row_color='k',row_txtkw={},
+                         kw_childpd={},
+                         **kwargs):
+        """
+        Plot by generating a matrix axes.
+
+        Notes:
+        ------
+        First we build a lax2D object if force_lax2D is None, then we plot
+            each child Pdata by using Pdata.Pdata.plot_split_axes.
+
+        Parameters:
+        -----------
+        plotkw: the keyword used in plt.plot function.
+        kw_childpd: kwargs in Pdata.Pdata.plot_split_axes.
+        """
+        if force_lax2D is None:
+            lax2D = build_lax2D(row_labels=self.child_tags,
+                             col_labels=self.parent_tags,
+                             add_label=add_label,
+                             col_pos=col_pos,col_color=col_color,col_txtkw=col_txtkw,
+                             row_pos=row_pos,row_color=row_color,row_txtkw=row_txtkw,
+                             axes_style='matrix',
+                             **kwargs)
+
+            self.lax2D = lax2D
+        else:
+            lax2D = force_lax2D
+
+        for ptag,clax in lax2D.iteritems():
+            pd_temp = self.child_pdata[ptag]
+            pd_temp.plot_split_axes(force_axdic=clax.to_dict(),
+                                    plotkw=plotkw,**kw_childpd)
 
     def plot_split_parent_tag(self,plotkw={},legtag=None,
                               legtagseq=None,legkw={},
@@ -4435,7 +4555,15 @@ class NestPdata(object):
 
     def add_attr_from_npd(self,attrname,npd,axis='y'):
         """
-        Add attributes by using the value of the attribute from another NestPdata.
+        Add attributes by using the value of the attribute from another NestPdata npd.
+
+        Parameters:
+        -----------
+        attrname: attrname whose values are to be added or changed for the
+            current NestPdata object.
+        npd: the NestPdata from which values will be taken.
+        axis: the axis attribute from the source npd whose values are to be
+            added into the current npd.
         """
         for ptag,cpd in self.iteritems():
             cpd.add_attr_by_tag(**{attrname:npd.child_pdata[ptag].get_data_as_dic(axis)})
@@ -4510,87 +4638,6 @@ class Pdata3D(object):
             npd.set_child_tag_order(taglist)
         self.child_tags = taglist[:]
 
-    def build_lax2D(self,add_label=True,
-                    pos_label='ouc',color_label='k',textkw_label={},
-                    pos_parent=(-0.2,0.5),color_parent='k',textkw_parent={},
-                    axes_style='matrix',
-                    **kwargs):
-        """
-        Build a lax2D project to plot. First level of the axes is label, second
-            level is parent_tags, third level as child_tags.
-
-
-        Parameters:
-        -----------
-        axes_style == 'matrix':
-
-        axes_style == 'icecore':
-            kwargs:
-                force_axs: force the axes.
-                tagseq: the sequence for parent tags.
-                tagcolor: the tag color, could be list.
-                force_axdic: force a dictionary of parent_tag/axes pairs.
-                ncols: num of columns when force_axs is None
-                sharex,sharey: the same as plt.subplots
-                tagpos: the position of parent_tag
-                tagtxtkw: kwargs for tag text.
-                column_major: True if parent tags are deployed in column-wise.
-                unit: used as ylabel for each subplot
-                xlim: xlim
-                plotkw: the keyword used in plt.plot function.
-                tagprefix:
-                    1. default value is empty string.
-                    2. in case of 'alpha', alphabetic values will be appended.
-                       in case of 'Alpha', uppercase alphabetic values appended.
-                    2. in case of 'numeric', numbers will be appended.
-                tagbracket:
-                    1. default value is 'normal', i.e., "()" will be used.
-                    subkw: kwarg in plt.subplots function
-
-                tagprefixnum: the starting index for tagprefix. Eg., if one wants to
-                    start with "c" rather than "a" when using the lowercase letter as
-                    the prefix, then tagprefixnum should be set to 2. Note tagprefixnum
-                    is 0-based, following the python indexing convention.
-        """
-        if axes_style == 'matrix':
-            nrows = len(self.parent_tags)
-            ncols = len(self.labels)
-            # note here column_major is False
-            axdic = _creat_dict_of_tagaxes_by_tagseq_g(
-                                default_tagseq=['dummy%s'%s for s in range(nrows*ncols)],
-                                ncols=ncols,
-                                tagpos=False,
-                                **kwargs)
-            axs = np.array(axdic.values()).reshape(nrows,ncols,order='C')
-            lax2D = LabelAxes.LabelAxes2D.from_axes_matrix(axs,self.labels,
-                                                           self.parent_tags,
-                                                           parent_as_column=True)
-            self.lax2D = lax2D
-
-            if add_label == True:
-                lax2D.add_parent_label(pos=pos_label,color=color_label,**textkw_label)
-
-            lax = lax2D[self.labels[0]]
-            lax.add_label(pos=pos_parent,color=color_parent,**textkw_parent)
-
-        elif axes_style == 'icecore':
-            axdic = _creat_dict_of_tagaxes_by_tagseq_g(
-                                default_tagseq=self.labels,
-                                **kwargs)
-
-            lax = LabelAxes.LabelAxes(tags=axdic.keys(),axl=axdic.values())
-            dic = lax.build_icecore(num=len(self.parent_tags),keys=self.parent_tags[:])
-            lax2D = LabelAxes.LabelAxes2D(dic)
-            self.lax2D = lax2D
-
-            if add_label == True:
-                lax2D.add_parent_label(pos=pos_label,color=color_label,**textkw_label)
-                for ptag,lax in self.lax2D.iteritems():
-                    lax.add_label(pos=pos_parent,color=color_parent,**textkw_parent)
-        else:
-            raise ValueError("Unknown axes_style")
-
-
     def plot(self,plotkw={},legkw={},legtag=False,
              add_label=True,
              pos_label='ouc',color_label='k',textkw_label={},
@@ -4629,12 +4676,15 @@ class Pdata3D(object):
                 1. default value is 'normal', i.e., "()" will be used.
                 subkw: kwarg in plt.subplots function
         """
-        self.build_lax2D(add_label=add_label,
-                         pos_label=pos_label,color_label=color_parent,textkw_label={},
-                         pos_parent=pos_parent,color_parent=color_parent,textkw_parent={},
-                         axes_style=axes_style,
-                         **kwargs)
+        lax2D = build_lax2D(row_labels=self.parent_tags,
+                   col_labels=self.labels,
+                   add_label=add_label,
+                   col_pos=pos_label,col_color=color_label,col_txtkw=textkw_label,
+                   row_pos=pos_parent,row_color=color_parent,row_txtkw=textkw_parent,
+                   axes_style=axes_style,
+                   **kwargs)
 
+        self.lax2D = lax2D
         for label,npd in self.iteritems():
             npd.plot_split_parent_tag(plotkw=plotkw,legtag=legtag,tagpos=False,
                               force_axdic=self.lax2D[label].data,legkw=legkw)
@@ -4753,26 +4803,33 @@ def plot_bar_p4dreg(p4d,r_name='r_value',p_name='p_value',
                             legtagseq=None,legkw={},
                             **kwargs):
     """
-    Plot the regression Panel4D information.
+    Use a NestPdata object to plot the regression Panel4D information as
+        a bar plot, with significant levels being automaticaly displayed.
+
+    Returns:
+    --------
+    A tuple of (npd,npd_barleft).
 
     Parameters:
     -----------
-    p4d: Panel4D which contains regression information. Labels should be
-        parent_tags of resulting npd, items should be xlabels for the bar
-        plot, major_axis should be independent variable which are the legends
-        of the bar plot, minor_axis contains r_value and p_value.
-    r_name, p_name: the minor_axis names.
+    p4d: Panel4D which contains regression information. Labels will be
+        parent_tags of resulting npd, items will be xlabels for the bar
+        plot, major_axis should be independent variables which are the legends
+        of the bar plot, minor_axis contains r_value and p_value information.
+    r_name, p_name: the minor_axis names used as r_value and pvalue.
 
     xnum: the intervals that are expanded in force_sharex when constructing
-        the bar plot npd.
-    bleftshift: used in constructing bar plot npd.
-    yshift: used in constructing the text npd.
+        the bar plot npd (i.e., determining the intervals between bar plots).
+    bleftshift: the shift towards left used in constructing bar plot npd.
+    yshift: used in constructing the text npd (used to denote signifcance levels).
 
-    legtag: the child tag for which legend will be shown, False to supress.
-    legtagseq: the child tag sequence for the legtag.
-    legkw: used in plt.legend for the legtag
+    legtag: the parent tag (one of the p4d labels) for which legend will be
+        shown, False to supress.
+    legtagseq: the child tag sequence for the legend (i.e., sequences of p4d.major_axis
+        values).
+    legkw: used in plt.legend.
     barkw: the keyword used in plt.plot function.
-    xlabrot: rotation of xticklabel
+    xlabrot: rotation of xticklabels.
 
     kwargs: (used in npd.bar_split_parent_tag)
         force_axs: force the axes.
@@ -4810,7 +4867,7 @@ def plot_bar_p4dreg(p4d,r_name='r_value',p_name='p_value',
     def convert_pvalue_to_string(dft_p):
         dft_ptext = dft_p.astype('str')
         dft_ptext[:] = ''
-        dft_ptext[dft_p<0.1] = '*'
+        dft_ptext[dft_p<0.05] = '*'
         return dft_ptext
 
     # build the text attributes to add
@@ -4826,7 +4883,7 @@ def plot_bar_p4dreg(p4d,r_name='r_value',p_name='p_value',
     npd_barleft = npd.barleft_NestPdata(yshift=yshift)
     for ptag in npd_barleft.parent_tags:
         npd_barleft.child_pdata[ptag].add_attr_by_tag(text=dic_text[ptag])
-    npd_barleft.add_text(text=True,ha='center')
+    npd_barleft.add_text(text=True,ha='center',va='center')
 
     return (npd,npd_barleft)
 

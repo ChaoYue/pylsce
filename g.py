@@ -1869,7 +1869,7 @@ def plot_OLS_reg(ax,x,y,c='k',ls='--',PosEquation='uc',
     xnew,ynew=pb.shared_unmask_data(x,y)
 
     [slope, intercept, r_value, p_value, std_err] = sp.stats.mstats.linregress(xnew,ynew)
-    xnew_plot=xnew
+    xnew_plot=pb.linspace_array(xnew)
     line=ax.plot(xnew_plot,xnew_plot*slope+intercept,color=c,linestyle=ls,**kwargs)
 
     if PosEquation == False:
