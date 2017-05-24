@@ -167,8 +167,6 @@ class LabelAxes(object):
         else:
             colordic = self._propagate(color)
 
-        print colordic
-
         for tag,ax in self.iteritems():
             labdic[tag] = g.Set_AxText(ax,labeldic[tag],pos=posdic[tag],
                                        color=colordic[tag],

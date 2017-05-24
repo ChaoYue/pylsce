@@ -2344,7 +2344,8 @@ class Pdata(object):
 
         Parameters:
         -----------
-        axes: force axes, otherwise existing axes for Pdata will be guessed.
+        axes: force axes (instance of mat.axes.Axes or dict of mat.axes.Axes),
+            otherwise existing axes for Pdata will be guessed.
         text: could be of type string or list of strings. In case of list,
             the length must be equal to the length of (x,y) pairs (assuming
             all tags have equal-length data). When is True, the 'text' attributes
@@ -2356,7 +2357,12 @@ class Pdata(object):
 
         # handle axes
         if axes is not None:
-            axdic = OrderedDict.fromkeys(self._taglist,axes)
+            if isinstance(axes,mat.axes.Axes):
+                axdic = OrderedDict.fromkeys(self._taglist,axes)
+            elif isinstance(axes,dict):
+                axdic = axes
+            else:
+                raise TypeError("axes can only be dict or mat.axes.Axes")
         else:
             try:
                 if isinstance(self.axes,mat.axes.Axes):
@@ -2394,9 +2400,13 @@ class Pdata(object):
             color = colordic[tag]
             axes = axdic[tag]
             for x,y,s in zip(tag_data['x'],tag_data['y'],textlist):
-                axes.text(x,y,s,fontdict=fontdict,
-                          color=color,
-                          withdash=withdash, **kwargs)
+                if np.isnan(x) or np.isnan(y) \
+                    or x is np.ma.masked or y is np.ma.masked:
+                    pass
+                else:
+                    axes.text(x,y,s,fontdict=fontdict,
+                              color=color,
+                              withdash=withdash, **kwargs)
 
 
     def _get_plot_attr_value_from_data(self,*attr_list):
@@ -2999,7 +3009,7 @@ class Pdata(object):
     def plot_OLS_reg(self,taglist='all',color='k',ls='--',
                      PosEquation='uc',
                      precision_slope=3, precision_inter=3,
-                     textcolor='r',**kwargs):
+                     textcolor='r',txtkw={},**kwargs):
 
         """
         Add OLS regression line.
@@ -3007,10 +3017,12 @@ class Pdata(object):
         Parameters:
         -----------
         kwargs: kwargs for axes.plot to plot the regression lines.
+        txtkw: kwargs for mat.axes.Axes.txt
         PosEquation,textcolor: the position of the texts for
             demonstrating regression equations, could be a single value of
             appropriate type, or a list of objects of appropriate type. Or
-            a dictionary of {'first':(x0,y0),'horizontal':hshift,'vertical':vshift}
+            a dictionary of {'first':(x0,y0),'horizontal':hshift,'vertical':vshift},
+            or False to suppress showing the equations.
         textcolor: the text color for the textcolor of the texts
             demonstrating regression equations, could be single value or list of
             appropriate type. In case of self._SingleAxes = True, textcolor will be
@@ -3067,6 +3079,7 @@ class Pdata(object):
                                         precision_slope=precision_slope,
                                         precision_inter=precision_inter,
                                         textcolor = tcdic[tag],
+                                        txtkw=txtkw,
                                         **kwargs)
             self.OLSlinedic[tag] = line
             OLSresultdic[tag] = OLSre_list
@@ -3110,7 +3123,7 @@ class Pdata(object):
                 Rsquare_dic = regdf.ix['R2'].to_dict()
             Rsquare_anno_dic = {}
             for key,val in Rsquare_dic.items():
-                Rsquare_anno_dic[key] = 'R2='+str(round(val,2))+surfix
+                Rsquare_anno_dic[key] = 'R2='+'{:0.{}f}'.format(val,2)+surfix
         else:
             pass
 
@@ -3122,7 +3135,7 @@ class Pdata(object):
                 pvalue_dic = regdf.ix['p_value'].to_dict()
             pvalue_anno_dic = {}
             for key,val in pvalue_dic.items():
-                pvalue_anno_dic[key] = 'p='+str(round(val,3))+surfix
+                pvalue_anno_dic[key] = 'p='+'{:0.{}f}'.format(val,2)+surfix
         else:
             pass
 
@@ -3198,6 +3211,42 @@ class Pdata(object):
 
     # change to a more general name
     add_info = OLS_add_info
+
+
+    def OLS_change_regline_color(self,regdf='OLSresult',valid_color='k'):
+        """
+        Render regression line color as 'none' when p_value is lower than 0.05.
+
+        Parameters:
+        -----------
+        regdf: in case of string, it's expected to be an attribute of the
+            Pdata.Pdata object, otherwise it should be provided as a
+            pandas dataframe, 'p_value' should be an index value of the
+            dataframe.
+        valid_color: regression line color for significant regressions.
+        """
+        if isinstance(regdf,str):
+            regdf = self.__getattribute__(regdf)
+        elif isinstance(regdf,pa.DataFrame):
+            pass
+        else:
+            raise TypeError("regdf could only be string or dataframe")
+
+        if 'p_value' not in regdf.index:
+            raise ValueError("p_value must be in the dataframe index")
+
+        dic = regdf.ix['p_value'].to_dict()
+        colordic = OrderedDict()
+        for k,v in dic.iteritems():
+            if v > 0.05:
+                color='none'
+            else:
+                color=valid_color
+            colordic[k] = color
+
+        for key,artist in self.OLSlinedic.iteritems():
+            plt.setp(artist,color=colordic[key])
+
 
     def add_regression_line(self,reg_df,color='k',ls='--',**kwargs):
         """
@@ -3676,6 +3725,7 @@ class NestPdata(object):
                          add_label=True,force_lax2D=None,
                          col_pos='ouc',col_color='k',col_txtkw={},
                          row_pos=(-0.2,0.5),row_color='k',row_txtkw={},
+                         childpd_tagpos=False,
                          kw_childpd={},
                          **kwargs):
         """
@@ -3689,8 +3739,12 @@ class NestPdata(object):
         Parameters:
         -----------
         plotkw: the keyword used in plt.plot function.
+        childpd_tagpos: tagpos in the child_pdata.plot_split_axes kwargs.
         kw_childpd: kwargs in Pdata.Pdata.plot_split_axes.
         """
+        if 'tagpos' not in kw_childpd:
+            kw_childpd['tagpos'] = childpd_tagpos
+
         if force_lax2D is None:
             lax2D = build_lax2D(row_labels=self.child_tags,
                              col_labels=self.parent_tags,
@@ -3830,17 +3884,19 @@ class NestPdata(object):
     def plot_OLS_reg(self,color='k',ls='--',
                      PosEquation='uc',
                      precision_slope=3, precision_inter=3,
-                     textcolor='r',**kwargs):
+                     textcolor='r',txtkw={},**kwargs):
         """
         Add OLS regression lines.
 
         Parameters:
         -----------
         kwargs: kwargs for axes.plot to plot the regression lines.
+        txtkw: kwargs for mat.axes.Axes.txt
         PosEquation,textcolor: the position of the texts for
             demonstrating regression equations, could be a single value of
             appropriate type, or a list of objects of appropriate type. Or
-            a dictionary of {'first':(x0,y0),'horizontal':hshift,'vertical':vshift}
+            a dictionary of {'first':(x0,y0),'horizontal':hshift,'vertical':vshift},
+            or False to suppress showing the equations.
         textcolor: the text color for the textcolor of the texts
             demonstrating regression equations, could be single value or list of
             appropriate type. In case of self._SingleAxes = True, textcolor will be
@@ -3854,7 +3910,7 @@ class NestPdata(object):
                             PosEquation=PosEquation,
                             precision_slope=precision_slope,
                             precision_inter=precision_inter,
-                            textcolor=textcolor,**kwargs)
+                            textcolor=textcolor,txtkw=txtkw,**kwargs)
 
             OLSresultdic[ptag] = cpd.OLSresult
         self.OLSpanel = pa.Panel(OLSresultdic)
@@ -4137,6 +4193,9 @@ class NestPdata(object):
         else:
             if hasattr(self,'lax'):
                 axdic = self.lax.to_dict()
+            if hasattr(self,'lax2D'):
+                # note here axdic is actually a nested dict
+                axdic = self.lax2D.data
             else:
                 raise ValueError("lax attribute not found, axes could not None")
 
@@ -4602,6 +4661,15 @@ class Pdata3D(object):
             npd = NestPdata.from_dict_of_dataframe(p4d[label])
             npdlist.append(npd)
         dic = OrderedDict(zip(p4d.labels,npdlist))
+        return Pdata3D(dic)
+
+    @classmethod
+    def from_dict_of_Panel(cls,dic):
+        npdlist = []
+        for label in dic.keys():
+            npd = NestPdata.from_dict_of_dataframe(dic[label])
+            npdlist.append(npd)
+        dic = OrderedDict(zip(dic.keys(),npdlist))
         return Pdata3D(dic)
 
     def to_Panel4D(self):

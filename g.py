@@ -1852,7 +1852,7 @@ class mapb(object):
 
 def plot_OLS_reg(ax,x,y,c='k',ls='--',PosEquation='uc',
                  precision_slope=3, precision_inter=3,
-                 textcolor='r',**kwargs):
+                 textcolor='r',txtkw={},**kwargs):
     """
     Purpose: plot OLS regression line for y~x on axes ax.
     Note:
@@ -1879,7 +1879,9 @@ def plot_OLS_reg(ax,x,y,c='k',ls='--',PosEquation='uc',
                                  intercept, precision_slope, precision_inter)+\
                   '\n'+\
                   'R2={0:.2f}, p={1:.2f}'.format(r_value**2,float(p_value))
-        Set_AxText(ax,equtext,pos=PosEquation,color=textcolor)
+
+        equtext = equtext.replace('+ -','- ') # handle negative intercept
+        Set_AxText(ax,equtext,pos=PosEquation,color=textcolor,**txtkw)
 
     return line[0],[slope, intercept, r_value, p_value, std_err, len(xnew)]
 
