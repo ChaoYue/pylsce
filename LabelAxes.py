@@ -7,6 +7,7 @@ import numpy as np
 import g
 import pb
 import tools
+import string
 
 def _replace_none_by_given(orinput,default):
     if orinput is None:
@@ -497,12 +498,17 @@ class LabelAxes2D(object):
     def figure(self):
         return self.child_ix(self.child_tags[0]).figure
 
-def label_axl(axl,label,pos='ul',forcelabel=None,**kwargs):
+def label_axl(axl,label='alpha',pos='ul',forcelabel=None,**kwargs):
     """
     Parameters:
     -----------
     forcelabel: the 'label' parameter in LabelAxes.add_label
     """
+    num = len(axl)
+    if label == 'alpha':
+        label = ['({0})'.format(s) for s in string.letters.lower()[:num]]
+    else:
+        pass
     lax = LabelAxes(tags=label,axl=axl)
     lax.add_label(label=forcelabel,pos=pos,**kwargs)
     return lax
