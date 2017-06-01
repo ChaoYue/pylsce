@@ -1023,7 +1023,7 @@ def Fig_Save_Close(fig,figname):
     plt.close(figname)
 
 
-def Set_AxText(ax,text_string,pos='uc',ftdic={'size':12},color='k',**kwargs):
+def Set_AxText(ax,text_string,pos='uc',ftdic=None,color='k',**kwargs):
     """
     Purpose: add a text to axes. pos can be['lc','uc','ll','ul','lr','ur'],
         when it's a tuple, indicating relative position.

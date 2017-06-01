@@ -485,8 +485,9 @@ def _creat_dict_of_tagaxes_by_tagseq_g(**kwargs):
 
 def build_lax2D(add_label=True,
                 row_labels=None,col_labels=None,
+                row_pos_meta='left',
                 col_pos='ouc',col_color='k',col_txtkw={},
-                row_pos=(-0.2,0.5),row_color='k',row_txtkw={},
+                row_pos=None,row_color='k',row_txtkw={},
                 axes_style='matrix',
                 **kwargs):
     """
@@ -497,6 +498,11 @@ def build_lax2D(add_label=True,
     Parameters:
     -----------
     axes_style == 'matrix':
+        row_pos_meta: the 'meta' layer row label position, could be only 'left'
+            or right. In case of 'left', the LabelAxes object of the first column
+            axes will be used; in case of 'right', the LabelAxes object of the
+            last column axes will be used.
+        row_pos: the 'fine' layer row label position.
 
     axes_style == 'icecore':
         kwargs:
@@ -544,8 +550,15 @@ def build_lax2D(add_label=True,
         if add_label == True:
             lax2D.add_parent_label(pos=col_pos,color=col_color,**col_txtkw)
 
-        lax = lax2D[col_labels[0]]
-        lax.add_label(pos=row_pos,color=row_color,**row_txtkw)
+            if row_pos_meta == 'left':
+                clax = lax2D[col_labels[0]]
+                row_pos = _replace_none_by_given(row_pos,(-0.2,0.5))
+            elif row_pos_meta == 'right':
+                clax = lax2D[col_labels[-1]]
+                row_pos = _replace_none_by_given(row_pos,(1.2,0.5))
+            else:
+                raise ValueError("row_pos_meta can only be 'left' or 'right'")
+            clax.add_label(pos=row_pos,color=row_color,**row_txtkw)
 
     elif axes_style == 'icecore':
         axdic = _creat_dict_of_tagaxes_by_tagseq_g(
@@ -3239,12 +3252,12 @@ class Pdata(object):
         colordic = OrderedDict()
         for k,v in dic.iteritems():
             if v > 0.05:
-                color='none'
+                colordic[k] = 'none'
             else:
-                color=valid_color
-            colordic[k] = color
+                pass
 
-        for key,artist in self.OLSlinedic.iteritems():
+        for key in colordic.keys():
+            artist = self.OLSlinedic[key]
             plt.setp(artist,color=colordic[key])
 
 
@@ -3723,8 +3736,9 @@ class NestPdata(object):
 
     def plot_matrix_axes(self,plotkw={},
                          add_label=True,force_lax2D=None,
+                         row_pos_meta='right',
                          col_pos='ouc',col_color='k',col_txtkw={},
-                         row_pos=(-0.2,0.5),row_color='k',row_txtkw={},
+                         row_pos=None,row_color='k',row_txtkw={},
                          childpd_tagpos=False,
                          kw_childpd={},
                          **kwargs):
@@ -3749,6 +3763,7 @@ class NestPdata(object):
             lax2D = build_lax2D(row_labels=self.child_tags,
                              col_labels=self.parent_tags,
                              add_label=add_label,
+                             row_pos_meta=row_pos_meta,
                              col_pos=col_pos,col_color=col_color,col_txtkw=col_txtkw,
                              row_pos=row_pos,row_color=row_color,row_txtkw=row_txtkw,
                              axes_style='matrix',
