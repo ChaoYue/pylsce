@@ -1618,8 +1618,9 @@ class Pdata(object):
 
     def _build_pdata_vstack(self):
         arr = self.Vstack_By_Tag()
+        arr[np.isnan(arr)] = 0. # change Nan to zero
         #we want the cumsum with direction from bottom-->top.
-        arr_cumsum = arr[::-1].cumsum(axis=0)[::-1]
+        arr_cumsum = arr[::-1].filled(0.).cumsum(axis=0)[::-1]
         pdnew = self.copy()
         for index,tag in enumerate(self._taglist):
             pdnew.data[tag]['y'] = arr_cumsum[::-1][index]
@@ -1938,8 +1939,9 @@ class Pdata(object):
         #build the new pdata that stores the cumsum data
         tagseq = _replace_none_by_given(tagseq,self._taglist)
         arr = self.Vstack_By_Tag(tagseq)
+        arr[np.isnan(arr)] = 0. #change Nan to zero
         #we want the cumsum with direction from bottom-->top.
-        arr_cumsum = arr[::-1].cumsum(axis=0)[::-1]
+        arr_cumsum = arr[::-1].filled(0.).cumsum(axis=0)[::-1]
         pdnew = self.copy()
         for index,tag in enumerate(tagseq):
             pdnew.data[tag]['y'] = arr_cumsum[::-1][index]
@@ -4712,14 +4714,48 @@ class Pdata3D(object):
             raise ValueError('ordered labels not equal to present one')
 
     def set_parent_tag_order(self,taglist):
+        """
+        Set tag order and this order will be kept throughout all the class
+        method when default taglist is used.
+        """
         for ptag,npd in self.iteritems():
             npd.set_parent_tag_order(taglist)
         self.parent_tags = taglist[:]
 
     def set_child_tag_order(self,taglist):
+        """
+        Set tag order and this order will be kept throughout all the class
+        method when default taglist is used.
+        """
         for ptag,npd in self.iteritems():
             npd.set_child_tag_order(taglist)
         self.child_tags = taglist[:]
+
+
+    def set_xdata_by_ydata_by_tag(self,child_tag):
+        """
+        For each child_pdata, call the Pdata.Pdata.set_xdata_by_ydata_by_tag
+            to fill the xdata by the ydata of a speficified child_tag.
+
+        Returns:
+        --------
+        A NestPdata object, or degrade automatically to a Pdata object if after
+            operation, there is a single child key left in the reulted
+            NestPdata object.
+        """
+        npd = self.copy()
+        dic = OrderedDict()
+        for ptag,pd in self.iteritems():
+            dic[ptag] = pd.set_xdata_by_ydata_by_tag(child_tag)
+        npd = NestPdata(dic)
+        if len(npd.child_tags) > 1:
+            return npd
+        else:
+            npd.permuate_tag()
+            pd = npd.child_pdata[npd.parent_tags[0]]
+            pd.set_tag_order(self.parent_tags)
+            return pd
+
 
     def plot(self,plotkw={},legkw={},legtag=False,
              add_label=True,
