@@ -2198,6 +2198,10 @@ class ProxyLegend(object):
         for lab,c in zip(labellist,colorlist):
             self.add_line_by_tag(lab,color=c,marker='o',ls='none',**kwargs)
 
+    def add_circles_by_color(self,colorlist,labellist,**kwargs):
+        for lab,c in zip(labellist,colorlist):
+            self.add_line_by_tag(lab,mfc='none',mec=c,marker='o',ls='none',**kwargs)
+
     def create_legend_top(self,ax,tagseq=None,expand=True,**kwargs):
         """
         shortcut for creating legend above axes.
