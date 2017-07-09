@@ -50,9 +50,14 @@ def get_layer_attribute_table(layer,feature_range=None):
         index_list.append(i)
     return pa.DataFrame(data_list,index=index_list)
 
-def get_line_from_linearring(ring):
+#  Structure of shapefile:
+#  shapefile > layer > feature (Polygon, MultiPolygon)
+#    > rings/lines > linearring/line > vertex
+
+def get_vertices_from_linearring(ring):
     """
-    Get the list of vertices in the linearring.
+    Get the list of vertices from the linearring. A LINEARRING is the geometry
+    that comprises POLYGON or MULTIPOLYGON.
 
     Returns:
     --------
@@ -64,18 +69,19 @@ def get_line_from_linearring(ring):
     else:
         num_point = ring.GetPointCount()
         d = [ring.GetPoint(i) for i in range(num_point)]
-        line = [(a,b) for (a,b,c) in d]
-        return line
+        vertices = [(a,b) for (a,b,c) in d]
+        return vertices
 
 
 def get_linelist_from_polygon(polygon):
     """
-    Get a "polygon" from the polygon object.
+    Get the line list from a polygon object. A POLYGON is the geometry that
+    comprises the Feature object.
 
     Returns:
     --------
-    A list of sublist, each sublist is a list of vertices from
-        a linearring object.
+    A list of sublist, each sublist is a list of vertices (2-len tuple) that
+        comprise a linearring object.
     """
     geometry_name = polygon.GetGeometryName()
     if geometry_name != 'POLYGON':
@@ -85,44 +91,184 @@ def get_linelist_from_polygon(polygon):
         linelist = []
         for i in range(geocount):
             ring = polygon.GetGeometryRef(i)
-            line = get_line_from_linearring(ring)
+            line = get_vertices_from_linearring(ring)
             if line != []:
                 linelist.append(line)
-    if len(linelist) == 1:
-        return (linelist,None)
-    else:
-        return (linelist[0:1],linelist[1:])
+    return linelist
 
-def get_lines_from_multipolygon(mpolygon):
+
+def add_one_linearring_to_axes(ax,ring,facecolor='0.7',edgecolor='k',
+                               transfunc=None,
+                               **kwargs):
     """
-    Get lines from MultiPolygon object.
+    Add ONE Linearring to Axes. a Linearring is one enclosed line, with its
+    vertices being linearly connected to form an enclosed circle.
+
+    Parameters:
+    -----------
+    ring: An enclosed line, provided as a list of 2-len tuples. Note this is
+        different as the `verts` in mat.collections.PolyCollection. `verts` there
+        is a list of rings or enclosed lines.
+    transfunc: functions used for spatial transformation, they should receive
+        tuple as parameter and return tuple.
+
+    Notes:
+    ------
+    Actually mat.collections.PolyCollection could create more than one
+        enclosed circles (polygon) in just a single call, but here we
+        separate this function in order to set different colors for inner
+        and outer circles.
+    """
+    if transfunc is None:
+        ringnew = ring
+    else:
+        ringnew = [transfunc(t) for t in ring]
+
+    # Note here we need to put ringnew in [] to conform to the `verts`
+    # in the function of mat.collections.PolyCollection
+    poly = mat.collections.PolyCollection([ringnew],
+                                          facecolor=facecolor,
+                                          edgecolor=edgecolor,
+                                          **kwargs)
+    ax.add_collection(poly)
+
+def Add_Polygon_to_Axes(ax,linelist,
+                        outer_ring_facecolor='0.7',outer_ring_edgecolor='k',
+                        outer_ring_kwargs={},
+                        inner_ring_facecolor='w',inner_ring_edgecolor='k',
+                        inner_ring_kwargs={},
+                        transfunc=None):
+    """
+    Notes:
+    ------
+    A polygon can have one or more lines, with each line shown as an eclosed
+    circle by using mat.collections.PolyCollection. If one POLYGON has
+    more than one ring, we treat the first one as outer circle, others as
+    inner circles.
+    """
+    if len(linelist) == 0:
+        raise ValueError("input linelist has length 0")
+    else:
+        add_one_linearring_to_axes(ax,linelist[0],
+                               facecolor=outer_ring_facecolor,
+                               edgecolor=outer_ring_edgecolor,
+                               transfunc=transfunc,**outer_ring_kwargs)
+        if len(linelist) > 1:
+            for ring in linelist[1:]:
+                add_one_linearring_to_axes(ax,ring,
+                                       facecolor=inner_ring_facecolor,
+                                       edgecolor=inner_ring_edgecolor,
+                                       transfunc=transfunc,
+                                       **inner_ring_kwargs)
+
+def get_polygon_list_from_multipolygon(mpolygon):
+    """
+    Get polygon list from a MultiPolygon object.
 
     Returns:
     --------
+    a polygon list, i.e., a list of lines, which is agian a nested list,
+        whose member is a list of 2-len tuples.
     """
     geometry_name = mpolygon.GetGeometryName()
     polygon_num = mpolygon.GetGeometryCount()
     if geometry_name != 'MULTIPOLYGON':
         raise TypeError("the type is {0}".format(geometry_name))
     else:
-        out_ring_list,inner_ring_list = [],[]
+        polygon_list = []
         for i in range(polygon_num):
             polygon = mpolygon.GetGeometryRef(i)
-            (out_ring,inner_ring) = get_linelist_from_polygon(polygon)
-            for subring in out_ring:
-                out_ring_list.append(subring)
-            if inner_ring is not None:
-                if len(inner_ring) == 1:
-                    inner_ring_list.append(inner_ring[0])
-                else:
-                    for subring in inner_ring:
-                        inner_ring_list.append(subring)
-            else:
-                pass
-    if inner_ring_list == []:
-        return (out_ring_list,None)
+            linelist = get_linelist_from_polygon(polygon)
+            polygon_list.append(linelist)
+
+    return polygon_list
+
+def Add_MultiPolygon_to_Axes(ax,polygon_list,
+                             outer_ring_facecolor='0.7',
+                             outer_ring_edgecolor='k',
+                             outer_ring_kwargs={},
+                             inner_ring_facecolor='w',
+                             inner_ring_edgecolor='k',
+                             inner_ring_kwargs={},
+                             transfunc=None):
+    """
+    Parameters:
+    -----------
+    polygon_list: a nested list, i.e., list of lines. Note that lines are
+    a list of line, which is a list of 2-len tuples.
+    """
+    if len(polygon_list) == 0:
+        raise ValueError("input polygon_list has length 0")
     else:
-        return (out_ring_list,inner_ring_list)
+        for list_of_rings in polygon_list:
+            Add_Polygon_to_Axes(ax,list_of_rings,
+                                outer_ring_facecolor=outer_ring_facecolor,
+                                outer_ring_edgecolor=outer_ring_edgecolor,
+                                outer_ring_kwargs={},
+                                inner_ring_facecolor=inner_ring_facecolor,
+                                inner_ring_edgecolor=inner_ring_edgecolor,
+                                inner_ring_kwargs={},
+                                transfunc=transfunc,
+                                **kwargs)
+
+def Add_Feature_to_Axes(ax,feature,
+                        outer_ring_facecolor='0.7',
+                        outer_ring_edgecolor='k',
+                        outer_ring_kwargs={},
+                        inner_ring_facecolor='w',
+                        inner_ring_edgecolor='k',
+                        inner_ring_kwargs={},
+                        transfunc=None):
+
+    georef = feature.GetGeometryRef()
+    geometry_name = georef.GetGeometryName()
+
+
+    if geometry_name == 'POLYGON':
+        linelist = get_linelist_from_polygon(georef)
+        Add_Polygon_to_Axes(ax,linelist,
+                            outer_ring_facecolor=outer_ring_facecolor,
+                            outer_ring_edgecolor=outer_ring_edgecolor,
+                            outer_ring_kwargs=outer_ring_kwargs,
+                            inner_ring_facecolor=inner_ring_facecolor,
+                            inner_ring_edgecolor=inner_ring_edgecolor,
+                            inner_ring_kwargs=inner_ring_kwargs,
+                            transfunc=transfunc)
+
+    elif geometry_name == 'MULTIPOLYGON':
+        polygon_list = get_polygon_list_from_multipolygon(georef)
+        Add_MultiPolygon_to_Axes(ax,polygon_list,
+                                 outer_ring_facecolor=outer_ring_facecolor,
+                                 outer_ring_edgecolor=outer_ring_edgecolor,
+                                 outer_ring_kwargs=outer_ring_kwargs,
+                                 inner_ring_facecolor=inner_ring_facecolor,
+                                 inner_ring_edgecolor=inner_ring_edgecolor,
+                                 inner_ring_kwargs=inner_ring_kwargs,
+                                 transfunc=transfunc)
+    else:
+        raise ValueError("geometry type not polygon!")
+
+
+def Add_Layer_to_Axes(ax,layer,
+                      outer_ring_facecolor='0.7',
+                      outer_ring_edgecolor='k',
+                      outer_ring_kwargs={},
+                      inner_ring_facecolor='w',
+                      inner_ring_edgecolor='k',
+                      inner_ring_kwargs={},
+                      transfunc=None):
+
+    feature_count = layer.GetFeatureCount()
+    for i in range(feature_count):
+        feature = layer.GetFeature(i)
+        Add_Feature_to_Axes(ax,feature,
+                            outer_ring_facecolor=outer_ring_facecolor,
+                            outer_ring_edgecolor=outer_ring_edgecolor,
+                            outer_ring_kwargs=outer_ring_kwargs,
+                            inner_ring_facecolor=inner_ring_facecolor,
+                            inner_ring_edgecolor=inner_ring_edgecolor,
+                            inner_ring_kwargs=inner_ring_kwargs,
+                            transfunc=transfunc)
 
 
 def get_geometry_from_feature(feature):
@@ -189,7 +335,6 @@ def group_dataframe_of_ring(df,groupby):
         dfdic[name] = grp[name].apply(merge_list)
     return pa.DataFrame(dfdic)
 
-
 def get_geometry_type_from_feature(feature):
     georef = feature.GetGeometryRef()
     geometry_name = georef.GetGeometryName()
@@ -199,84 +344,6 @@ def get_geometry_count_from_feature(feature):
     georef = feature.GetGeometryRef()
     geometry_count = georef.GetGeometryCount()
     return geometry_count
-
-def Add_Linearring_to_Axes(ax,ring,facecolor='0.7',edgecolor='k',
-                           transfunc=None,
-                           **kwargs):
-    """
-    Add Linearring to Axes.
-
-    Parameters:
-    -----------
-    ring: the same as `verts` in mat.collections.PolyCollection.
-    transfunc: functions used for spatial transformation, they should receive
-        tuple as parameter and return tuple.
-    """
-    if transfunc is None:
-        ringnew = ring
-    else:
-        ringnew = [transfunc(t) for t in ring]
-
-    poly = mat.collections.PolyCollection([ringnew],
-                                          facecolor=facecolor,
-                                          edgecolor=edgecolor,
-                                          **kwargs)
-    ax.add_collection(poly)
-
-def Add_Polygon_to_Axes(ax,list_of_rings,facecolor='0.7',edgecolor='k',
-                        inner_ring_facecolor='w',inner_ring_edgecolor='k',
-                        inner_ring_kwargs={},
-                        transfunc=None,
-                        **kwargs):
-    if len(list_of_rings) == 0:
-        raise ValueError("input list_of_rings has length 0")
-    elif len(list_of_rings) == 1:
-        Add_Linearring_to_Axes(ax,list_of_rings[0],facecolor=facecolor,
-                               edgecolor=edgecolor,
-                               transfunc=transfunc,**kwargs)
-    else:
-        Add_Linearring_to_Axes(ax,list_of_rings[0],facecolor=facecolor,
-                               edgecolor=edgecolor,
-                               transfunc=transfunc,
-                               **kwargs)
-        for ring in list_of_rings[1:]:
-            Add_Linearring_to_Axes(ax,ring,facecolor=inner_ring_facecolor,
-                                   edgecolor=inner_ring_edgecolor,
-                                   transfunc=transfunc,
-                                   **inner_ring_kwargs)
-
-def Add_MultiPolygon_to_Axes(ax,list_of_polygon,
-                             facecolor='0.7',
-                             edgecolor='k',
-                             inner_ring_facecolor='w',
-                             inner_ring_edgecolor='k',
-                             inner_ring_kwargs={},
-                             transfunc=None,
-                             **kwargs):
-    if len(list_of_polygon) == 0:
-        raise ValueError("input list_of_polygon has length 0")
-    else:
-        for list_of_rings in list_of_polygon:
-            Add_Polygon_to_Axes(ax,list_of_rings,
-                                facecolor=facecolor,
-                                edgecolor=edgecolor,
-                                inner_ring_facecolor=inner_ring_facecolor,
-                                inner_ring_edgecolor=inner_ring_edgecolor,
-                                inner_ring_kwargs={},
-                                transfunc=transfunc,
-                                **kwargs)
-
-def Add_Feature_to_Axes_Polygon(ax,feature,transfunc=None):
-    geotype = get_geometry_type_from_feature(feature)
-    geometry_vertices = get_geometry_from_feature(feature)
-    if geotype == 'POLYGON':
-        Add_Polygon_to_Axes(ax,geometry_vertices,inner_ring_facecolor='w',
-                            transfunc=transfunc)
-    elif geotype == 'MULTIPOLYGON':
-        Add_MultiPolygon_to_Axes(ax,geometry_vertices,inner_ring_facecolor='w',
-                                 transfunc=transfunc)
-    else:
-        raise ValueError("geometry type not polygon!")
 
 
 
