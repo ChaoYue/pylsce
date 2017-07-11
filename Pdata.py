@@ -4302,7 +4302,7 @@ class NestPdata(object):
                 legtag = _replace_none_by_given(legtag,self.parent_tags[0])
                 legax = self.lax[legtag]
 
-            self.child_pdata[legtag].set_legend(plottype='stackline',
+            self.child_pdata[self.parent_tags[0]].set_legend(plottype='stackline',
                                                 taglab=True,
                                                 tag_seq=legtagseq,
                                                 axes=legax,
