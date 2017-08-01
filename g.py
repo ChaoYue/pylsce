@@ -2514,8 +2514,20 @@ def Axes_remove_last_yticklabel(ax,ind=0):
 def imshow(data,lognorm=False,ax=None,vmin=None,vmax=None,
            interpolation='none',**kwargs):
     if ax is None: fig,ax = Create_1Axes()
-    if vmin is None: vmin = np.ma.min(data)
-    if vmax is None: vmax = np.ma.max(data)
+    if vmin is None:
+        vdmin = np.ma.min(data)
+        if np.isnan(vdmin):
+            pass
+        else:
+            vmin = vdmin
+
+    if vmax is None:
+        vdmax = np.ma.max(data)
+        if np.isnan(vdmax):
+            pass
+        else:
+            vmax = vdmax
+
     if lognorm == False:
         norm = None
     else:

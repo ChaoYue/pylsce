@@ -3344,7 +3344,7 @@ class Pdata(object):
 
 
     def to_dic(self,sharex=False):
-        outdic={}
+        outdic=OrderedDict()
         if sharex==True:
             for tag,tag_dic in self.data.items():
                 outdic[tag]=tag_dic['y']
