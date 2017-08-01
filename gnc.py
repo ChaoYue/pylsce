@@ -1614,7 +1614,7 @@ class Ncdata(object):
             self.latvar_name='y'
             self.lonvar_name='x'
         else:
-            print 'Warning! Default lat and lon names are not found in the data, please specify by add_latvar_lonvar_name, or update default list'
+            raise ValueError('Warning! Default lat and lon names are not found in the data, please specify by add_latvar_lonvar_name, or update default list')
 
         #find lat/lon values
         org_latvar = grp.variables[self.latvar_name][:]
