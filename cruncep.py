@@ -54,7 +54,7 @@ def retrieve_wind(filename):
     return windspeed
 
 
-def get_var_asgrid(grp,varname):
+def get_var_asgrid(grp,varname,npindex=np.s_[:],forcedata=None):
     """
     Retrieve a varname from the grp object (the land-only file) as a grided data.
 
@@ -83,7 +83,9 @@ def get_var_asgrid(grp,varname):
         landmask = arrmask.mask
 
     #Retrieve the varname needed.
-    var = grp.variables[varname][:]
+    var = grp.variables[varname][:][npindex]
+    if forcedata is not None:
+        var = forcedata
     varnew = np.zeros((var.shape[0],360,720))
     for ind,num in enumerate(land):
         #This is the last column
@@ -116,6 +118,11 @@ def latlon_to_land_index(vlat,vlon):
     """
     This function returns the land index for the point of (lat,lon) for
     0.5-degree CRUNCEP data.
+
+    Notes:
+    ------
+    it return the land value of the vlat,vlon, to get the index needed, one
+    needs to use np.nonzero(grp.variables['land']==land_value)
     """
     globlat = np.arange(89.75,-90,-0.5)
     globlon = np.arange(-179.75,180,0.5)

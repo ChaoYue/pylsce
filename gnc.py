@@ -541,6 +541,24 @@ class NcWrite(object):
         for dimname in self.rootgrp.dimensions.keys():
             self.dimensions[dimname] = self.rootgrp.dimensions[dimname]
 
+    def copy_vars_from_grp(self,varlist,grp,newnames=None):
+        """
+        copy vars from a varlist in grp.
+        """
+        for i,varname in enumerate(varlist):
+            varfull = grp.variables[varname]
+            if newnames is None:
+                varname_target = varname
+            else:
+                varname_target = newnames[i]
+            var = self.rootgrp.createVariable(varname_target,
+                                              varfull.dtype,
+                                              varfull.dimensions)
+            var[:] = varfull[:]
+
+            #copy the variable attributes
+            for attr_name in varfull.ncattrs():
+                var.setncattr(attr_name, varfull.getncattr(attr_name))
 
     def add_dim_lat(self, latvar = None, **attr_kwargs):
         """
@@ -612,7 +630,9 @@ class NcWrite(object):
         Purpose: Add variables to NetCDF file.
         Arguments:
             1. varinfo_value = [varname, dim_tuple, dtype, varvalue], eg.['ba', ('time_counter', 'lat', 'lon', ), 'f4', ba_data]
-            2. use attr_copy_from if the variable attributes are copied from another netCDF4.Variable object.
+            2. use attr_copy_from if the variable attributes are copied from
+                another netCDF4.Variable object, with the exceptions of
+                'missing_value' and '_FillValue'
             3. set variable attributes by using attr_kwargs.
         Notes:
         ------
@@ -1652,11 +1672,14 @@ class Ncdata(object):
             self.pftvar = grp.variables[self.pftvar_name][:]
             self.dimvar_name_list.append(self.pftvar_name)
 
-
         #read the variables by form into d0
         self.d0 = g.ncdata()
         for var in grp.variables.keys():
             self.d0.__dict__[var]=grp.variables[var]
+            #we put all variables with the single dimension into dimvar_name_list
+            if len(grp.variables[var].dimensions) == 1 \
+                and var not in self.dimvar_name_list:
+                self.dimvar_name_list.append(var)
 
         #set the d1 to hold variable values
         self.d1 = g.ncdata()
@@ -2863,6 +2886,10 @@ class Ncdata(object):
         Parameters:
         -----------
         legkw: as in plt.legend()
+
+        Notes:
+        ------
+        Return a Pdata.Pdata object.
         '''
         pd = self.Add_Single_Var_Pdata(varname,npindex=npindex,pftsum=pftsum)
         pd.plot()
