@@ -544,6 +544,10 @@ class NcWrite(object):
     def copy_vars_from_grp(self,varlist,grp,newnames=None):
         """
         copy vars from a varlist in grp.
+
+        Parameters:
+        -----------
+        newnames: should be of equal length to varlist.
         """
         for i,varname in enumerate(varlist):
             varfull = grp.variables[varname]
@@ -2840,8 +2844,8 @@ class Ncdata(object):
 
         Parameters:
         -----------
-        lat: (lat1,lat2), lat range.
-        lon: (lon1,lon2), lon ragne.
+        rlat: (lat1,lat2), lat range, default is the whole data range.
+        rlon: (lon1,lon2), lon ragne, default is the whole data range.
 
         Notes:
         ------
@@ -3198,7 +3202,7 @@ class Ncdata(object):
         #Get the final output dic and apply fuctions
         regdic=OrderedDict()
         for name,region_mask in dic_region_mask.items():
-            annual_reg = mathex.ndarray_apply_mask(vardata,mask=region_mask)
+            annual_reg = mathex.ndarray_mask_smart_apply(vardata,mask=region_mask)
             if np.any(np.isnan(annual_reg)) or np.any(np.isinf(annual_reg)):
                 print "Warning! nan or inf values have been masked for variable {0} reg_id {1}".format(varname,reg_id)
                 annual_reg = np.ma.masked_invalid(annual_reg)

@@ -1999,8 +1999,9 @@ class Pdata(object):
         Parameters:
         ----------
         ylow,yhigh: attribute names used to derive the edges.
-        relative: boolean, when True, ylow and yhigh will be postive
-            and the real edges are calculated by `y-ylow` and `y+yhigh`
+        relative: boolean, when True, ylow and yhigh are relative shifts from
+            the mean vlaue, they should be postive values. In such a case
+            the real edges are calculated by `y-ylow` and `y+yhigh`
         kwargs: for plt.fill_between
         """
         if hasattr(self,'lax'):

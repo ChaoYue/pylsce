@@ -130,4 +130,11 @@ def latlon_to_land_index(vlat,vlon):
     return index_lat*720+index_lon+1
 
 
+def landmask_to_land(land_mask):
+    """
+    Get the field 'land' used in the cruncep forcing by the land_mask. Land
+        points should have the zero or False value in the land_mask array.
+    """
+    nlat,nlon = land_mask.shape
+    return np.ravel_multi_index(np.nonzero(~land_mask),(nlat,nlon))+1
 
