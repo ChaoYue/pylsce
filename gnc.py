@@ -2641,8 +2641,25 @@ class Ncdata(object):
             ind = self.find_index_by_point(vlat,vlon)
             list_index.append(ind)
             val = self.Get_PointValue(var,(vlat,vlon),pftsum=pftsum,forcedata=forcedata)
-            list_value.append(val)
+            list_value.append(float(val))
         dft = pa.DataFrame({'Location':list_index,var:list_value})
+        return dft
+
+    def extract_values_varlist(self,varlist,lat,lon,pftsum=False):
+        """
+        Extract the values from a series of lat,lon pairs.
+
+        Parameters:
+        -----------
+        varlist,lat,lon: varnames to be retrieved and lat/lon ndarray.
+        pftsum: as others
+        """
+        dic = OrderedDict()
+        for var in varlist:
+            dft = self.extract_values(var,lat,lon,pftsum=pftsum)
+            dic[var] = dft[var]
+        dft = pa.DataFrame(dic)
+
         return dft
 
     def Plot_PointValue(self,var,(vlat,vlon),ax=None,ylab=False,pyfunc=None,pftsum=False,**kwargs):

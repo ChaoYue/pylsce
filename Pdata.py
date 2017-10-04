@@ -806,7 +806,7 @@ class Pdata(object):
 
         pd = Pdata()
         for tag,df in dfgroup:
-            dfdict = df.to_dict(outtype='list')
+            dfdict = df.to_dict(orient='list')
             datadict = replace_dict_by_mapping(dfdict,mapdict)
             pd.add_entry_by_dic(**{tag:datadict})
         return pd
@@ -3087,7 +3087,13 @@ class Pdata(object):
         self.OLSlinedic = OrderedDict()
         OLSresultdic = OrderedDict()
         for ind,tag in enumerate(taglist):
-            line,OLSre_list = g.plot_OLS_reg(self.axdic[tag],
+            y=np.ma.masked_invalid(self.data[tag]['y'])
+            x=np.ma.masked_invalid(self.data[tag]['x'])
+            xnew,ynew=pb.shared_unmask_data(x,y)
+            if np.size(xnew) ==0 or np.size(y) == 0:
+                pass
+            else:
+                line,OLSre_list = g.plot_OLS_reg(self.axdic[tag],
                                         self.data[tag]['x'],
                                         self.data[tag]['y'],
                                         c=lcdic[tag],ls=ls,

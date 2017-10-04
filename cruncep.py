@@ -114,7 +114,7 @@ def land_to_index(num):
         i = num/720
     return (i,j)
 
-def latlon_to_land_index(vlat,vlon):
+def latlon_to_land_index(vlat,vlon,globlat=None,globlon=None):
     """
     This function returns the land index for the point of (lat,lon) for
     0.5-degree CRUNCEP data.
@@ -124,10 +124,12 @@ def latlon_to_land_index(vlat,vlon):
     it return the land value of the vlat,vlon, to get the index needed, one
     needs to use np.nonzero(grp.variables['land']==land_value)
     """
-    globlat = np.arange(89.75,-90,-0.5)
-    globlon = np.arange(-179.75,180,0.5)
+    if globlat is None:
+        globlat = np.arange(89.75,-90,-0.5)
+    if globlon is None:
+        globlon = np.arange(-179.75,180,0.5)
     (index_lat,index_lon) = gnc.find_index_by_point(globlat,globlon,(vlat,vlon))
-    return index_lat*720+index_lon+1
+    return index_lat*len(globlon)+index_lon+1
 
 
 def landmask_to_land(land_mask):
