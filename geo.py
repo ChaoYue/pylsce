@@ -12,6 +12,7 @@ import numpy as np
 import Pdata
 import gnc
 from collections import OrderedDict
+import scipy as sp
 
 def _check_df_inner_out_ring_validity(df):
     if not isinstance(df,pa.DataFrame):
@@ -399,6 +400,40 @@ def dataframe_build_geoindex_from_lat_lon(df,lat_name='lat',
             dft['geoindex'][i] = gnc.find_index_by_point(lat,lon,(vlat,vlon))
         except ValueError:
             dft['geoindex'][i] = np.nan
+    return dft
+
+def dataframe_build_geoindex_from_lat_lon_sp(df,lat_name='lat',
+                                          lon_name='lon',
+                                          lat=None,lon=None):
+    """
+    Build a geoindex column for the dataframe "df", by check each
+        latitude/longitude pairs (lat_name/lon_name) falling in which
+        grid cell of the grid as specified by the vectors of lat/lon.
+        The latitude/longitude pairs falling outside the grid will
+        have geoindex values as np.nan.
+
+    Returns:
+    --------
+    A copy of input dataframe with in geoindex being added.
+
+    Parameters:
+    -----------
+    df: input dataframe.
+    lat_name/lon_name: the latitude/longitude field name of the dataframe.
+    lat/lon: the latitude/longitude vectors used to compose the grid.
+
+    Notes:
+    ------
+    This used a scipy function and is thus faster.
+    """
+    dft = df.copy()
+    longrid,latgrid = np.meshgrid(lon,lat)
+    grids = np.vstack([longrid.ravel(),latgrid.ravel()]).transpose()
+    tree = sp.spatial.cKDTree(grids)
+    points = np.vstack([df[lon_name].values,df[lat_name].values]).transpose()
+    dist, indexes = tree.query(points)
+    tindex = [np.unravel_index(num,latgrid.shape) for num in indexes]
+    dft['geoindex'] = tindex
     return dft
 
 def mdata_by_geoindex_dataframe(df,shape=None,mask=None,empty_value=np.nan,

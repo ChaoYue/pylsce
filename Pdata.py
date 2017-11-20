@@ -349,7 +349,7 @@ def _treat_taglist_by_tagpresurfix(taglist,tagprefix='',tagbracket='normal',
     elif tagprefix == 'numeric':
         tagprefix_list = map(str,range(num+1,len(taglist)+num+1))
     else:
-        raise ValueError("wrong tagprefix value!")
+        pass
 
     def decorate_tagbracket(tagprefix_list,tagbracket):
         if tagprefix_list[0] == '':
@@ -815,6 +815,19 @@ class Pdata(object):
     def from_dict(cls,dic,x=None):
         pd = Pdata()
         pd.add_entry_sharex_noerror_by_dic(dic,x=x)
+        return pd
+
+    @classmethod
+    def from_dataframe_xy(cls,df,xname=None,yname=None,tag=None):
+        """
+        Create a Pdata.Pdata by specifying the x/y name pairs.
+        """
+        pd = Pdata()
+        if tag is None:
+            tag=yname
+        pd.add_tag(tag)
+        pd.addx(df[xname].values,tag)
+        pd.addy(df[yname].values,tag)
         return pd
 
     @classmethod
