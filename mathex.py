@@ -1756,6 +1756,49 @@ def ndarray_regrid(arr,numlat=2,numlon=2,weight=None,dense=False):
     else:
         raise ValueError("ndim of input array higher than 4, not implemented!")
 
+def ndr_upscale_majority(arr,numlat=2,numlon=2,fill_value=0):
+    """
+    Upscale an array by setting the value of the new grid cell as the dominant
+        value of the comprising original grid cells.
+
+    Parameters:
+    -----------
+    fill_value: the value that's considered as mask value.
+    """
+    if np.ndim(arr) != 2:
+        raise ValueError("Can hanle only 2-dim array!")
+    else:
+        if len(np.nonzero(arr==fill_value)[0])>0:
+            raise ValueError("default fill_value already presents in the data")
+
+        shape = arr.shape
+        data1 = arr.reshape(shape[0]/numlat,numlat,shape[1],order='C')
+        data2 = data1.reshape(shape[0]/numlat,numlat,shape[1]/numlon,numlon,order='C')
+        data2 = data2.astype('int')
+        if np.ma.isMA(arr):
+            data2 = data2.filled(fill_value)
+
+        outdata = np.zeros((shape[0]/numlat,shape[1]/numlon))
+        for i in range(shape[0]/numlat):
+            for j in range(shape[1]/numlon):
+                values,counts = np.unique(data2[i,:,j,:].flatten(),return_counts=True)
+
+                if len(counts) == 1:
+                    outdata[i,j] = values[0]
+                else:
+                    counts = list(counts)
+                    ind = np.argmax(counts)
+                    if values[ind] == fill_value:
+                        counts.pop(ind)
+                        outdata[i,j] = values[np.argmax(counts)]
+                    else:
+                        outdata[i,j] = values[np.argmax(counts)]
+
+        if np.ma.isMA(arr):
+            return np.ma.masked_equal(outdata,fill_value)
+        else:
+            return outdata
+
 def ndr_grid_convert(arr,shape,area_weight=True,area_frac=None):
     """
     Change the arr from its original grid to the new grid with 'shape'. Shape
