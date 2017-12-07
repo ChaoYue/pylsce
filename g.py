@@ -2146,6 +2146,32 @@ class ProxyLegend(object):
             pleg.set_new_tags(zip(self.tags,newtags))
         return pleg
 
+    def _get_tags(self,key):
+        #normal key:
+        if isinstance(key,(str,unicode)):
+            return [key]
+        elif isinstance(key,int):
+            return [self.tags[key]]
+        else:
+            if isinstance(key, slice):
+                return self.tags[key]
+            elif isinstance(key, list):
+                if len(np.unique(map(type,key))) > 1:
+                    raise TypeError("input list must be single type")
+                else:
+                    if isinstance(key[0],str):
+                        return key
+                    elif isinstance(key[0],int):
+                        return [self.tags[index-1] for index in key]
+                    else:
+                        raise TypeError("slice not understood.")
+            else:
+                raise TypeError("slice not understood.")
+
+    def __getitem__(self,key):
+        subtags = self._get_tags(key)
+        dic = pb.Dic_Extract_By_Subkeylist(self.data,subtags)
+        return ProxyLegend(newdata=dic)
 
     @staticmethod
     def _check_void_handle_label(label):

@@ -496,3 +496,41 @@ def HDF4_gdalopen(filename,layerlist,namelist):
         return dic
 
 
+
+from math import radians, cos, sin, asin, sqrt
+def distance_haversine(lon1, lat1, lon2, lat2):
+    """
+    https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+    Calculate the great circle distance between two points 
+    on the earth (specified in decimal degrees). Return distance in km.
+
+    """
+    # convert decimal degrees to radians 
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+    # haversine formula 
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    r = 6371 # Radius of earth in kilometers. Use 3956 for miles
+    return c * r
+
+def distance_haversine_dataframe(dft):
+    """
+    Calculate the cross distances of points given by a dataframe. The input
+        dataframe must be 'lat','lon' as its columns.
+    """
+    adic = OrderedDict()
+    for reg1 in dft.index.tolist():
+        lat1,lon1 = dft.ix[reg1]['lat'],dft.ix[reg1]['lon']
+        dic = OrderedDict()
+        for reg2 in dft.index.tolist():
+            lat2,lon2 = dft.ix[reg2]['lat'],dft.ix[reg2]['lon']
+            dic[reg2] = distance_haversine(lon1,lat1,lon2,lat2)
+        adic[reg1] = pa.Series(dic)
+
+    return pa.DataFrame(adic)
+
+
+
