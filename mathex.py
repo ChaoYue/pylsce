@@ -2146,7 +2146,23 @@ def interp_level(level,num=2,kind='linear'):
     f = interpolate.interp1d(orindex[0::num],level,kind=kind)
     return f(orindex)
 
+def ndr_grid_interp(data,method='linear', fill_value=np.nan, rescale=False):
+    """
+    Interpolate the data over a regular spatial grid uisng sp.interpolate.griddata function.
+    This function is coded to make the use of griddata easier over a regular lat/lon grid.
 
+    Parameters:
+    -----------
+    data: a 2dim array.
+    """
+    # note along the latitude direction is grid_x; along the longitude direction is grid_y
+    grid_y,grid_x = np.meshgrid(np.arange(data.shape[1]),np.arange(data.shape[0]))
+
+    # np.nonzero(~data.mask) is a 2-len tuple: each member contains the index, in the sequence of x,y
+    result = sp.interpolate.griddata(np.nonzero(~data.mask),data[np.nonzero(~data.mask)],(grid_x,grid_y),
+                                     method=method, fill_value=fill_value, rescale=rescale)
+
+    return result
 
 def Ncdata_dict_to_dataframe_panel(Ncdata_dict,variables,mode='spasum',index=None):
     """
