@@ -227,6 +227,41 @@ class gmap(object):
                 lonm,latm=m.makegrid(numlon,numlat)
                 latm=np.flipud(latm)
                 lonpro,latpro=m(lonm,latm)
+
+        elif projection=='robin':
+            if not isinstance(mapbound,dict):
+                raise ValueError('please use dict to specify')
+            else:
+                # example: mapbound={'lon_0':0}
+                # lon_0 is central longitude of projection.
+                m = bmp.Basemap(projection='robin',lon_0=mapbound['lon_0'],
+                            resolution=resolution,ax=ax,**kwargs)
+
+                m.drawcoastlines(linewidth=0.7)
+                m.fillcontinents(color='0.8',zorder=0)
+                if gridstep is not None and gridstep!=False:
+                    m.drawparallels(np.arange(-90,91.,gridstep[0]),
+                                    labels=[1,0,0,0],fontsize=10)
+                    m.drawmeridians(np.arange(-180.,181.,gridstep[1]),
+                                    labels=[0,0,0,0],fontsize=10)
+                #make the grid
+                lat1=lat[-1];lat2=lat[0]
+                lon1=lon[0];lon2=lon[-1]
+                latind=np.nonzero((lat>=lat1)&(lat<=lat2))[0]
+                lonind=np.nonzero((lon>=lon1)&(lon<=lon2))[0]
+                numlat=len(latind)
+                numlon=len(lonind)
+                lonm,latm=m.makegrid(numlon,numlat)
+                latm=np.flipud(latm)
+                lonpro,latpro=m(lonm,latm)
+
+#gmap = bmap.gmap(projection='robin',mapbound={'lon_0':0},lat_0=0)
+#nx = int((m.xmax - m.xmin) / 25000.) + 1
+#ny = int((m.ymax - m.ymin) / 25000.) + 1
+#lats=np.arange(-89.75,90,0.5); lons=np.arange(-179.75,180,0.5)
+#data_interp, x, y = gmap.m.transform_scalar(koppen[::-1], lons, lats, nx, ny, returnxy=True,order=0)
+#gmap.m.imshow(data_interp,origin='lower',interpolation='none',alpha=0.2,vmin=1,vmax=5)
+
         else:
             raise ValueError('''projection '{0}' not supported'''
                              .format(projection))
