@@ -24,6 +24,7 @@ home_dir = os.path.expanduser('~')
 pylab_dir = home_dir+'/'+'python'
 basedata_dir = pylab_dir + '/basedata'
 
+vegmax_name = 'VEGET_MAX'
 
 def grp_find_unlimited_dim(grp):
     for dimname in grp.dimensions.keys():
@@ -1703,7 +1704,7 @@ class Ncdata(object):
             self.varlist = varlist_var[:]
         else:
             self.varlist = []
-            for var in ['Areas','VEGET_MAX','CONTFRAC','NONBIOFRAC','vegetfrac','maxvegetfrac']:
+            for var in ['Areas',vegmax_name,'CONTFRAC','NONBIOFRAC','vegetfrac','maxvegetfrac']:
                 if var in varlist_var:
                     self.d1.__dict__[var] = pb.Remove_dupdim(grp.variables[var][:])
                     self.varlist.append(var)
@@ -1809,13 +1810,13 @@ class Ncdata(object):
             varlist = self.varlist
 
         #retrieve vars if they're not retrieved yet.
-        vars_retrieve = pb.StringListAnotB(varlist,['Areas','VEGET_MAX','CONTFRAC']+self.varlist)
+        vars_retrieve = pb.StringListAnotB(varlist,['Areas',vegmax_name,'CONTFRAC']+self.varlist)
         self.retrieve_variables(vars_retrieve)
 
         #set for name_vegetmax
         if name_vegetmax is None:
-            if 'VEGET_MAX' in self.varlist:
-                name_vegetmax = 'VEGET_MAX'
+            if vegmax_name in self.varlist:
+                name_vegetmax = vegmax_name
             elif 'vegetfrac' in self.varlist:
                 name_vegetmax = 'vegetfrac'
             else:
@@ -1827,7 +1828,7 @@ class Ncdata(object):
 
         print "*******PFT VEGET_MAX weighted sum begin******"
         for var in varlist:
-            if var not in ['VEGET_MAX','vegetfrac','maxvegetfrac']:
+            if var not in [vegmax_name,'vegetfrac','maxvegetfrac']:
                 #4-dim variable before squeeze
                 if d0.__dict__[var].ndim==4:
                     if 'PFT' not in d0.__dict__[var].dimensions and 'veget' not in d0.__dict__[var].dimensions:
@@ -2045,7 +2046,7 @@ class Ncdata(object):
         else:
             if keyword == 'excludedim':
                 return pb.StringListAnotB(self.d0.__dict__.keys(),
-                                          self.dimvar_name_list+['Areas','VEGET_MAX'])
+                                          self.dimvar_name_list+['Areas',vegmax_name])
             else:
                 return pb.FilterStringList(keyword,self.d0.__dict__.keys())
 
@@ -2668,7 +2669,7 @@ class Ncdata(object):
 
         data=self.Get_PointValue(var,(vlat,vlon))
         if pftsum==True:
-            veget=np.ma.masked_array(self.Get_PointValue('VEGET_MAX',(vlat,vlon)),0.)
+            veget=np.ma.masked_array(self.Get_PointValue(vegmax_name,(vlat,vlon)),0.)
             data=np.ma.sum(data*veget,axis=1)
         if pyfunc is not None:
             if isfunction(pyfunc):
@@ -3221,7 +3222,7 @@ class Ncdata(object):
         for name,region_mask in dic_region_mask.items():
             annual_reg = mathex.ndarray_mask_smart_apply(vardata,mask=region_mask)
             if np.any(np.isnan(annual_reg)) or np.any(np.isinf(annual_reg)):
-                print "Warning! nan or inf values have been masked for variable {0} reg_id {1}".format(varname,reg_id)
+                print "Warning! nan or inf values have been masked for variable {0} reg_id {1}".format(varname,name)
                 annual_reg = np.ma.masked_invalid(annual_reg)
             if pyfunc is not None:
                 if callable(pyfunc):
@@ -4121,7 +4122,7 @@ def nc_merge_ncfiles(outfile,input_file_list,
                 print """var --{0}-- in file --{1}-- is discast due to
                     duplication""".format(varname,filename)
             else:
-                if varname == 'VEGET_MAX':
+                if varname == vegmax_name:
                     pftdim = True
                 else:
                     pftdim = False
