@@ -27,8 +27,9 @@ def VEGET_MAX_index_list(typenum=4):
     typenum:
         4: recast into bareland,forest,grass,and crop.
         5: recast into bareland,forest,grass,pasture,and crop.
-        forest: extract only the fractions for forest into four types:
+        'forest': extract only the fractions for forest into four types:
             BrEv,BrDe,NeEv,NeDe
+        'Jinfeng17':'bareland','forest','grass','crop','pasture','rangeland'
     """
     if typenum == 4:
         index_list = [np.s_[...,0:1,:,:],
@@ -55,8 +56,18 @@ def VEGET_MAX_index_list(typenum=4):
                      ]
         namelist = ['bareland','forest','grass','pasture','crop']
 
+    elif typenum == 'Jinfeng17':
+        index_list = [np.s_[...,0:1,:,:],
+                      np.s_[...,1:9,:,:],
+                      np.s_[...,[9,10],:,:],
+                      np.s_[...,[11,12],:,:],
+                      np.s_[...,[13,14],:,:],
+                      np.s_[...,[15,16],:,:]
+                     ]
+        namelist = ['bareland','forest','grass','crop','pasture','rangeland']
+
     else:
-        raise ValueError("typenum not equal to 4!")
+        raise ValueError("typenum not correct ! ")
     return (index_list,namelist)
 
 def VEGET_MAX_recast(arr,typenum=4,return_dic=False):
@@ -76,7 +87,7 @@ def VEGET_MAX_recast(arr,typenum=4,return_dic=False):
     if arr.ndim < 3:
         raise ValueError("input array dimension less than 3!")
     else:
-        if arr.shape[-3] not in [13,15]:
+        if arr.shape[-3] not in [13,15,17]:
             raise ValueError("the third last dim is not PFT!")
         else:
             index_list,namelist = VEGET_MAX_index_list(typenum)
