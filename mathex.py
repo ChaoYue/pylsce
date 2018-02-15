@@ -1494,7 +1494,8 @@ def ndarray_categorize_data(array,interval_sequence,numeric_output=False,
     1. numeric_output: boolean type. If it's True, then the output
         array will be integer array containing 1--> number of intervals
     2. force_keys: when givevn a list of strings, this will be used as
-        the categorical values of the array.
+        the categorical values of the array; when being assigned as 'mean',
+		will be the mean value of the intervals.
 
     Returns:
     --------
@@ -1508,10 +1509,23 @@ def ndarray_categorize_data(array,interval_sequence,numeric_output=False,
             keys = [str(interval_sequence[i])+'-'+str(interval_sequence[i+1]) for
                     i in range(len(interval_sequence)-1)]
         else:
-            keys = force_keys[:]
-        maxlen = max(map(len,keys))
-        outarray = np.empty_like(array,dtype='S'+str(maxlen))
+            if isinstance(force_keys,list):
+                keys = force_keys[:]
+            elif force_keys == 'mean':
+                keys = [np.mean([interval_sequence[i],interval_sequence[i+1]]) for
+                        i in range(len(interval_sequence)-1)]
+            else:
+                raise ValueError("Uknown value of force_keys")
+
+
+        # Prepare numeric_outarray and outarray
         numeric_outarray = np.ones(array.shape,dtype=int)
+
+        if isinstance(keys[0],str):
+            maxlen = max(map(len,keys))
+            outarray = np.empty_like(array,dtype='S'+str(maxlen))
+        else:
+            outarray = array.copy()
 
         for i in range(len(interval_sequence)-1):
             if i != len(interval_sequence)-2:
@@ -1522,8 +1536,9 @@ def ndarray_categorize_data(array,interval_sequence,numeric_output=False,
                 idx = ndarray_get_index_by_interval(array,
                     (interval_sequence[i],interval_sequence[i+1]),
                     left_close=True,right_close=True)
-            outarray[idx] = keys[i]
+
             numeric_outarray[idx] = i+1
+            outarray[idx] = keys[i]
 
         if numeric_output:
             return (keys,numeric_outarray)

@@ -57,7 +57,12 @@ c2={    'db':'#000080',
         'lg':'#80FF80'
        }
 
-
+cbrown = np.array(['bisque','tan','goldenrod','sienna','saddlebrown'])
+cviolet = np.array(['mediumpurple','mediumorchid','violet','blueviolet','magenta'])
+cred = np.array(['lightcoral','orangered','red','darkred','firebrick'])
+cgreen = np.array(['greenyellow','lightgreen','olive','green','darkseagreen'])
+cblue = np.array(['lightskyblue','cornflowerblue','dodgerblue','steelblue','blue','navy'])
+cyellow = np.array(['khaki','orange','gold','yellow','wheat'])
 
 chtml=['Red','White','Cyan','Silver','Blue','Grey','DarkBlue','Black','LightBlue','Orange','Purple','Brown','Yellow','Maroon','Lime','Green','Fuchsia','Olive']
 def show_html_color(chtml):
