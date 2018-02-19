@@ -808,6 +808,8 @@ class Pdata(object):
         for tag,df in dfgroup:
             dfdict = df.to_dict(orient='list')
             datadict = replace_dict_by_mapping(dfdict,mapdict)
+            if not isinstance(tag,str):
+                tag = str(tag)
             pd.add_entry_by_dic(**{tag:datadict})
         return pd
 
@@ -5237,6 +5239,30 @@ class Mdata(Pdata):
             cbar = plt.colorbar(mappable,ax=mappable.axes,**kw)
             cbardic[tag] = cbar
         self.cbardic = cbardic
+
+    def colorbar_single(self,plottype='mapconf',cax=None,**kwargs):
+        """
+        Add colorbar.
+
+        Parameters:
+        -----------
+        1. plottype: now accept only "mapconf".
+
+        kwargs:
+        -------
+        the same as plt.colorbar
+        *cax*: None | axes object into which the colorbar will be drawn
+        """
+        if plottype == 'mapconf':
+            mappable_dict = self.mapconfdic
+        #elif plottype == 'mapimg':
+            #mappable_dict = self.mapimgdic
+        else:
+            raise ValueError("plottype not known!")
+
+
+        mobj = mappable_dict.values()[0]
+        return mobj.colorbar(cax=cax,**kwargs)
 
     def mapimshow_split_axes(self,projection='cyl',mapbound='all',
                              rlat=None,rlon=None,
