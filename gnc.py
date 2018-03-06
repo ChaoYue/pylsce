@@ -3221,6 +3221,8 @@ class Ncdata(object):
             else:
                 data = annual_reg
 
+            regdic[name] = data
+
         return regdic
 
     def Plot_Vars(self,ax=None,varlist=None,npindex=np.s_[:],
