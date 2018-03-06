@@ -3130,7 +3130,7 @@ class Ncdata(object):
 
     def break_by_region(self,varname=None,separation=None,
                         forcedata=None,
-                        pyfunc=None,dimred_func=None,
+                        pyfunc=None,
                         pftsum=False,regdict=None):
         """
         Break the concerned variables into regional sum or avg or extracted array by specifying the separation_array.
@@ -3156,11 +3156,6 @@ class Ncdata(object):
         pyfunc:
             1. In case of function, used to change the regional array data;
             2. In case of a scalar, will be directly multiplied.
-        dimred_func: functions that used to reduce the dimensions of regional
-            array data, as long as it could be applied on numpy ndarray.
-            eg., np.sum will get the sum of the regional array. If None,
-            regional array will be returned.
-            == Note == to be depreciated in the future.
         pftsum: if True, the varname data from the pftsum will be used.
         regdict: a dictionay used to change the keys in the output dict with
             the values of `regdict`. Note the keys in regdict must be contained
@@ -3171,11 +3166,7 @@ class Ncdata(object):
         ------
         1. varname could be any dimension as long as the last two dimensions
             are the same as separation_array.
-        2. pyfunc and dimred_func work for np.ma functions
-        3. dimred_func is not a general disign will be removed later.
-            A general use of pyfunc is rather preferred. For example,
-            to have a region sum with unit change, use:
-            pyfunc = lambda x: np.ma.sum(np.ma.sum(x,axis=-1),axis=-1)*30.
+        2. pyfunc works for np.ma functions
         4. within the code, the array for each region is eaxtracted by masking
             the values outside the region so that it has the same dimension
             before applying any function operation. This allow a wide range of
@@ -3192,8 +3183,6 @@ class Ncdata(object):
             arrays or mean or sum as key values.
 
         """
-        print "dimred_func will be removed in the future!"
-
         #Get data: treat varname and forcedata
         if forcedata is not None:
             vardata = forcedata
@@ -3231,17 +3220,6 @@ class Ncdata(object):
                     data=annual_reg*pyfunc
             else:
                 data = annual_reg
-
-            if dimred_func is None:
-                regdic[name] = data
-            elif callable(dimred_func):
-                if data.ndim >= 2:
-                    regdic[name] = dimred_func(dimred_func(data,axis=-1),axis=-1)
-                else:
-                    raise ValueError("strange the dimension of data is less than 2!")
-            else:
-                raise TypeError("dimred_func must be callable")
-
 
         return regdic
 

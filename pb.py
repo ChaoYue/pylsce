@@ -576,15 +576,22 @@ def shared_unmask_data(a,b):
     return a[(~a.mask)&(~b.mask)].data,b[(~a.mask)&(~b.mask)].data
 
 
-def Dic_Apply_Func(pyfunc,indic):
+def Dic_Apply_Func(pyfunc,indic,axis='value'):
     """
     Purpose: apply a function to value of (key,value) pair in a dictionary and maintain the dic.
     Arguments:
         pyfunc --> a python function object.
+        axis: 'key' or 'value'.
     """
     outdic=OrderedDict()
-    for key in indic.keys():
-        outdic[key]=pyfunc(indic[key])
+    if axis == 'value':
+        for key in indic.keys():
+            outdic[key]=pyfunc(indic[key])
+    elif axis == 'key':
+        for key in indic.keys():
+            outdic[pyfunc(key)] = indic[key]
+    else:
+        raise ValueError("axis can only be 'key' or 'value'!")
     return outdic
 
 def Dic_Nested_Apply_Func(pyfunc,indic):
