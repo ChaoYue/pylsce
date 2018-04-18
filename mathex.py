@@ -775,7 +775,7 @@ def d2m(data,mode='sum'):
 
     Notes:
     ------
-    1. Default calendar is noleap and the length of the first dimension
+    1. Default calendar is noleap and the length of the first dimension should be 365
     """
     noleap = np.array([ 31,  59,  90, 120, 151, 181, 212, 243, 273, 304, 334, 365])
 
@@ -1386,10 +1386,14 @@ def ndarray_group_txt_by_func(filelist,outputfile=None,func=None,fmt='%.18e', de
         np.savetxt(outputfile, arr, fmt=fmt, delimiter=delimiter, newline=newline)
 
 
-def ndarray_mask_smart_apply(indata,mask):
+def ndarray_mask_smart_apply(indata,mask,copy=True,**kwargs):
     """
     This "smart" mask apply can handle only the situation of ndim of indata
         is 2/3/4 and the mask ndim is 2 or equal of indata ndim.
+
+    Parameters:
+    -----------
+    copy, kwargs: kwargs in np.ma.masked_array
     """
     if indata.ndim not in [2,3,4]:
         raise ValueError("could only handle ndim of 2/3/4 for input data")
@@ -1397,7 +1401,7 @@ def ndarray_mask_smart_apply(indata,mask):
         if mask.ndim > indata.ndim:
             raise ValueError("mask.ndim bigger than indata.ndim")
         elif mask.ndim == indata.ndim:
-            return np.ma.masked_array(indata,mask=mask)
+            return np.ma.masked_array(indata,mask=mask,copy=copy,**kwargs)
         else:
             if mask.ndim != 2:
                 raise ValueError("""mask.ndim could only be 2 in case of
@@ -1415,7 +1419,7 @@ def ndarray_mask_smart_apply(indata,mask):
                         mask_new = np.tile(mask,(inshape[0],inshape[1],1,1))
                     else: #not necessary as the ndim could only be 3/4
                         pass
-                    return np.ma.masked_array(indata,mask=mask_new)
+                    return np.ma.masked_array(indata,mask=mask_new,copy=copy,**kwargs)
 
 def ndarray_mask_by_threshold(pdata,map_threshold):
     '''

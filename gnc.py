@@ -25,6 +25,7 @@ pylab_dir = home_dir+'/'+'python'
 basedata_dir = pylab_dir + '/basedata'
 
 vegmax_name = 'VEGET_MAX'
+pftdim_name='PFT' #not used
 
 def grp_find_unlimited_dim(grp):
     for dimname in grp.dimensions.keys():
@@ -597,7 +598,7 @@ class NcWrite(object):
         A shortcut function to write PFT dimension, cf. add_dim
             for more information.
         """
-        pft_diminfo_value = ['PFT', 'PFT', 'Plant functional type',
+        pft_diminfo_value = [pftdim_name, pftdim_name, 'Plant functional type',
                               'i4', np.arange(1,pftnum+1), '1', False]
         self.add_dim(pft_diminfo_value, **attr_kwargs)
 
@@ -724,7 +725,7 @@ class NcWrite(object):
         self.add_var((varname, (self.latdim_name, self.londim_name, ), 'f4', data), attr_copy_from=attr_copy_from, **attr_kwargs)
 
     def add_var_4dim_time_pft_lat_lon(self, varname, data, attr_copy_from=None, **attr_kwargs):
-        self.add_var((varname, (self.timedim_name, 'PFT', self.latdim_name, self.londim_name, ), 'f4', data), attr_copy_from=attr_copy_from, **attr_kwargs)
+        self.add_var((varname, (self.timedim_name, pftdim_name, self.latdim_name, self.londim_name, ), 'f4', data), attr_copy_from=attr_copy_from, **attr_kwargs)
 
     def add_vars_from_Ncdata(self,varlist,Ncdata):
         """
@@ -801,7 +802,7 @@ class NcWrite(object):
         """
         dimlen_dic = pb.Dic_Apply_Func(len,self.dimensions)
         if numdim == 4:
-            glob_data = np.ma.zeros((dimlen_dic[self.timedim_name],dimlen_dic['PFT'],dimlen_dic[self.latdim_name],dimlen_dic[self.londim_name]))
+            glob_data = np.ma.zeros((dimlen_dic[self.timedim_name],dimlen_dic[pftdim_name],dimlen_dic[self.latdim_name],dimlen_dic[self.londim_name]))
             glob_data.mask = True
         elif numdim == 3:
             glob_data = np.ma.zeros((dimlen_dic[self.timedim_name],dimlen_dic[self.latdim_name],dimlen_dic[self.londim_name]))
@@ -1490,7 +1491,6 @@ class Ncdata(object):
     """
     _timedim_candidate_list=['time_counter','time','tstep']
     _timevar_name_can_list=['time_counter','time']
-    _default_pftdim='PFT' #not used
     flags=OrderedDict()
     flags['NonbioAdjust'] = False
     flags_original = flags.copy()
@@ -1672,8 +1672,8 @@ class Ncdata(object):
         #build the dimension variable list
         self.dimvar_name_list = [self.lonvar_name, self.latvar_name, self.timevar_name]
         #get PFT variable
-        if 'PFT' in self.varlist_all:
-            self.pftvar_name = 'PFT'
+        if pftdim_name in self.varlist_all:
+            self.pftvar_name = pftdim_name
             self.pftvar = grp.variables[self.pftvar_name][:]
             self.dimvar_name_list.append(self.pftvar_name)
 
@@ -3743,7 +3743,7 @@ def nc_subgrid(infile, outfile, subgrid=[(None,None),(None,None)]):
     outfile_ob.add_dim([d.londim_name, d.lonvar_name, d.lonvar_name, 'f4', d.lonvar[lon_index_min:lon_index_max+1], 'None', False])
     if hasattr(d,'unlimited_dimname'):
         outfile_ob.add_dim([d.unlimited_dimname, d.timevar_name, d.timevar_name, 'i4', d.timevar, 'None', True])
-    if 'PFT' in d.dimensions:
+    if pftdim_name in d.dimensions:
         outfile_ob.add_dim_pft()
 
     for varname in pb.StringListAnotB(d.d1.__dict__.keys(), d.dimvar_name_list):
@@ -4080,7 +4080,7 @@ def nc_merge_ncfiles(outfile,input_file_list,
     #get the default lat,lon,time info from the first input file
     subdata_first = Ncdata(input_file_list[0],
                            latlon_dim_name=Ncdata_latlon_dim_name)
-    if 'PFT' in subdata_first.dimensions:
+    if pftdim_name in subdata_first.dimensions:
         kwargs['pft'] = True
     kwargs['time_length'] = subdata_first.unlimited_dimlen
     kwargs['latvar'] = subdata_first.lat
