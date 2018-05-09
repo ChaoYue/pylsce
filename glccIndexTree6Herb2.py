@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+import numpy as np
+from collections import OrderedDict
+
 ia1_1 = 0
 ia2_1 = 1
 ia2_2 = 2
@@ -60,3 +64,26 @@ ia14_1 = 57
 ia14_2 = 58
 ia15_1 = 59
 ia15_2 = 60
+
+dicind = OrderedDict()
+dicind[1] = np.s_[ia1_1:ia1_1+1]
+dicind[2] = np.s_[ia2_1:ia2_6+1]
+dicind[3] = np.s_[ia3_1:ia3_6+1]
+dicind[4] = np.s_[ia4_1:ia4_6+1]
+dicind[5] = np.s_[ia5_1:ia5_6+1]
+dicind[6] = np.s_[ia6_1:ia6_6+1]
+dicind[7] = np.s_[ia7_1:ia7_6+1]
+dicind[8] = np.s_[ia8_1:ia8_6+1]
+dicind[9] = np.s_[ia9_1:ia9_6+1]
+dicind[10] = np.s_[ia10_1:ia10_2+1]
+dicind[11] = np.s_[ia11_1:ia11_2+1]
+dicind[12] = np.s_[ia12_1:ia12_2+1]
+dicind[13] = np.s_[ia13_1:ia13_2+1]
+dicind[14] = np.s_[ia14_1:ia14_2+1]
+dicind[15] = np.s_[ia15_1:ia15_2+1]
+
+
+
+
+
+

@@ -708,8 +708,8 @@ def m2ymean(cmi):
     d0=cmi.shape
     if len(d0)==1:
         if np.mod(d0[0],12)==0:
-            cminew=cmi.reshape(12,d0[0]/12)
-            cmiyear=np.ma.mean(cminew,axis=0,order='F')
+            cminew=cmi.reshape(12,d0[0]/12,order='F')
+            cmiyear=np.ma.mean(cminew,axis=0)
         else:
             raise ValueError('the first dimension is not product of 12!')
     elif len(d0)==2:

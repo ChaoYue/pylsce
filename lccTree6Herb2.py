@@ -202,6 +202,8 @@ def get_age_fraction_vegetmax(vegmax):
         frac_F = get_age_fraction_vegetmax(vegmax[np.newaxis,...])
         frac_F = pb.Dic_Apply_Func(lambda x:x[0],frac_F)
         return frac_F
+    else:
+        raise ValueError("Input array can only be 3- or 4-dim with PFT as the 2nd one")
 
 def get_veget_fraction_vegetmax(vegmax):
     """
