@@ -2033,7 +2033,7 @@ class ProxyLegend(object):
         newdata should be a dict with (tag,handler) pairs.
         '''
         if newdata is None:
-            self.data = {}
+            self.data = OrderedDict()
         elif isinstance(newdata,list):
             self.data = copy.copy(dict.fromkeys(newdata))
         elif isinstance(newdata,dict):
@@ -2308,7 +2308,7 @@ class ProxyLegend(object):
 
 class ProxyLegend2D(object):
     """
-    Initialize by a OrderDict of ProxyLegend objects.
+    Initialize by a OrderedDict of ProxyLegend objects.
     """
     def __init__(self,plegdic):
         if not isinstance(plegdic,OrderedDict):

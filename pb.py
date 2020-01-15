@@ -672,7 +672,7 @@ def Dic_Extract_By_Subkeylist(indic,keylist):
     """
     Return a new dic by extracting the key/value paris present in keylist
     """
-    outdic={}
+    outdic=OrderedDict()
     for key in keylist:
         try:
             outdic[key]=indic[key]
