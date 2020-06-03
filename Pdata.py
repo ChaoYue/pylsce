@@ -5705,15 +5705,18 @@ class Mdata(Pdata):
 
     def get_zonal_as_dataframe(self,mode='mean'):
         """
-        mode: 'mean' or 'sum', both being simple arithmetic operation.
+        mode: 'mean' or 'sum', both being simple arithmetic operation, or
+            a function can be supplied.
         """
-        dic = {}
+        dic = OrderedDict()
         for tag in self._taglist:
             arr = self.data[tag]['array']
             if mode == 'mean':
                 data = arr.mean(axis=1)
             elif mode == 'sum':
                 data = arr.sum(axis=1)
+            else:
+                data = mode(arr)
             dic[tag] = data
         lat = self.data[tag]['lat']
         return pa.DataFrame(dic,index=lat)

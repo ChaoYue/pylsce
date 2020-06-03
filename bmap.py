@@ -853,6 +853,31 @@ class mapimshow(object):
         self.gmap = mgmap
         self.pdata = pdata
 
+
+        if levels is None:
+            pass
+        else:
+            cbar_ticks,cbar_labels = \
+                _generate_colorbar_ticks_label(data_transform=data_transform,
+                                               colorbarlabel=colorbarlabel,
+                                               trans_base_list=trans_base_list,
+                                               forcelabel=forcelabel,
+                                               plotlev=plotlev,
+                                               plotlab=plotlab)
+            self.cbar_ticks = cbar_ticks
+            self.cbar_labels = cbar_labels
+
+    def colorbar(self,cax=None,**kwargs):
+        """
+        set colorbar on specified cax.
+
+        kwargs applies for plt.colorbar
+        """
+        cbar = plt.colorbar(self.cs,cax=cax,**kwargs)
+        cbar.set_ticks(self.cbar_ticks)
+        cbar.set_ticklabels(self.cbar_labels)
+        return cbar
+
 class mappcolormesh(object):
     """
     Purpose: plot a map on cyl projection.

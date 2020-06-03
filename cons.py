@@ -2,6 +2,7 @@
 
 import pb
 import numpy as np
+from collections import OrderedDict
 
 
 #PFTs in ORCHIDEE
@@ -55,6 +56,24 @@ pftdic15= \
 15: 'C4 agriculture'
 }
 
+
+# pft15 in the trunk4
+dicpft15_PFTtrunkDefault = OrderedDict()
+dicpft15_PFTtrunkDefault[1]='SoilBareGlobal'
+dicpft15_PFTtrunkDefault[2]='BroadLeavedEvergreenTropical'
+dicpft15_PFTtrunkDefault[3]='BroadLeavedRaingreenTropical'
+dicpft15_PFTtrunkDefault[4]='NeedleleafEvergreenTemperate'
+dicpft15_PFTtrunkDefault[5]='BroadLeavedEvergreenTemperate'
+dicpft15_PFTtrunkDefault[6]='BroadLeavedSummergreenTemperate'
+dicpft15_PFTtrunkDefault[7]='NeedleleafEvergreenBoreal'
+dicpft15_PFTtrunkDefault[8]='BroadLeavedSummergreenBoreal'
+dicpft15_PFTtrunkDefault[9]='LarixSpBoreal'
+dicpft15_PFTtrunkDefault[10]='C3GrassTemperate'
+dicpft15_PFTtrunkDefault[11]='C4GrassTemperate'
+dicpft15_PFTtrunkDefault[12]='C3AgricultureTemperate'
+dicpft15_PFTtrunkDefault[13]='C4AgricultureTemperate'
+dicpft15_PFTtrunkDefault[14]='C3GrassTropical'
+dicpft15_PFTtrunkDefault[15]='C3GrassBoreal'
 
 pftlist = [pftdic[num+1] for num in range(13)]
 pftlist15 = [pftdic15[num+1] for num in range(len(pftdic15))]
