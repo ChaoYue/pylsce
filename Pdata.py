@@ -3040,7 +3040,8 @@ class Pdata(object):
     def plot_OLS_reg(self,taglist='all',color='k',ls='--',
                      PosEquation='uc',
                      precision_slope=3, precision_inter=3,
-                     textcolor='r',txtkw={},**kwargs):
+                     textcolor='r',txtkw={},axdic=None,
+                     **kwargs):
 
         """
         Add OLS regression line.
@@ -3099,6 +3100,12 @@ class Pdata(object):
         else:
             lcdic = tools._propagate(self.taglist,color)
 
+        #handle axdic
+        if axdic is None:
+            axdic = self.axdic
+        else:
+            pass
+
         self.OLSlinedic = OrderedDict()
         OLSresultdic = OrderedDict()
         for ind,tag in enumerate(taglist):
@@ -3108,7 +3115,7 @@ class Pdata(object):
             if np.size(xnew) ==0 or np.size(y) == 0:
                 pass
             else:
-                line,OLSre_list = g.plot_OLS_reg(self.axdic[tag],
+                line,OLSre_list = g.plot_OLS_reg(axdic[tag],
                                         self.data[tag]['x'],
                                         self.data[tag]['y'],
                                         c=lcdic[tag],ls=ls,
