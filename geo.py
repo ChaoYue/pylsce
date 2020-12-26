@@ -533,4 +533,49 @@ def distance_haversine_dataframe(dft):
     return pa.DataFrame(adic)
 
 
+def Write_GTiff(filename,rasterOrigin,pixelWidth,pixelHeight,array):
+    """
+    rasterOrigin: (originX, originY)
+    """
+    cols = array.shape[1]
+    rows = array.shape[0]
+    originX = rasterOrigin[0]
+    originY = rasterOrigin[1]
+    driver = gdal.GetDriverByName('GTiff')
+    outRaster = driver.Create(filename, cols, rows, 1, gdal.GDT_Float32)
+    outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
+    outband = outRaster.GetRasterBand(1)
+    outband.WriteArray(array)
+    outband.FlushCache()
+
+def Read_GTiff(filename):
+    ds = gdal.Open(filename)
+    data = ds.ReadAsArray()
+    return data
+
+                                                                                
+def WriteAsGTiff(array,filename,example_file):                                               
+    """
+    example_file = 'GanNanFiles/FL_1h/FL_1h.tif'                                    
+    """
+    ds = gdal.Open(example_file)                                                    
+    size_x = ds.RasterXSize                                                         
+    size_y = ds.RasterYSize                                                         
+    originX, pixelWidth, _, originY, _, pixelHeight = ds.GetGeoTransform()          
+    rasterOrigin = (originX,originY)                                                
+    Write_GTiff(filename,rasterOrigin,pixelWidth,pixelHeight,array)  
+
+
+def Get_LatLon_GTiff(fname):
+    """
+    Return two numpy arrays of lat,lon of the tif file.
+    """
+    ds = gdal.Open(fname)
+    size_x = ds.RasterXSize
+    size_y = ds.RasterYSize
+    originX, pixelWidth, _, originY, _, pixelHeight = ds.GetGeoTransform()
+    lon = np.arange(originX,originX+pixelWidth*size_x,pixelWidth)
+    lat = np.arange(originY,originY+pixelHeight*size_y,pixelHeight)
+    return lat,lon
+
 

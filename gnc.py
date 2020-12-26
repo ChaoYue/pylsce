@@ -2191,7 +2191,7 @@ class Ncdata(object):
                 if external_var==False:
                     outvar=''
                 else:
-                    outvar=mapvar_full.getncattr(attribute)
+                    outvar=mapvar_full.__dict__[attribute]
             else:
                 outvar=None
             return outvar
@@ -2829,7 +2829,8 @@ class Ncdata(object):
 
     @append_doc_of(_get_final_ncdata_by_flag)
     def Add_Vars_to_Pdata(self,varlist,npindex=np.s_[:],unit=True,
-                          pd=None,pftsum=False,spa=None):
+                          pd=None,pftsum=False,spa=None,
+                          scale=1):
         """
         This will add the varnames in varlist to a Pdata object
             specified by npindex, note the npindex must be numpy
@@ -2840,7 +2841,7 @@ class Ncdata(object):
         if pd is None:
             pd=Pdata.Pdata()
         for varname in varlist:
-            data=final_ncdata.__dict__[varname][npindex]
+            data=final_ncdata.__dict__[varname][npindex]*scale
             x=np.arange(len(data))
             pd.add_entry_noerror(x,data,varname)
             if unit==True:
@@ -2851,7 +2852,31 @@ class Ncdata(object):
                     pass
         return pd
 
-    def Add_Single_Var_Pdata(self,varname,
+def nc_add_NestPdata_list_ncdata(ncdatalist,parent_taglist,varlist,
+                                 npindex=np.s_[:],unit=True,
+                                 pftsum=False,spa=None,
+                                 scale=1):
+    """
+    This will add the varnames in varlist to a NestPdata object
+    	specified by npindex, note the npindex must be numpy
+    	index trick object (np.s_).
+
+    Arguments:
+    -----------
+    parent_taglist: corresponding to the ncdatalist.
+
+    Notes:
+    ------
+    varlist will be the child taglist for the returned NestPdata object.
+    """
+    dic = OrderedDict()
+    for i,(tag,ncdata) in enumerate(zip(parent_taglist,ncdatalist)):
+        pd = ncdata.Add_Vars_to_Pdata(varlist,npindex=npindex,unit=unit,
+                                      pftsum=pftsum,spa=spa,scale=scale)
+        dic[tag] = pd
+    return Pdata.NestPdata(dic)
+
+    def Add_Single_Var_Pdata_EachPixel(self,varname,
                              rlat=None,
                              rlon=None,
                              pftsum=False,
@@ -4013,9 +4038,6 @@ def nc_add_Pdata_List_Ncdata(Ncdata_list,taglist,varname,spa=None,
                                  tag=tag)
 
     return pd
-
-
-
 
 @append_doc_of(_set_default_ncfile_for_write)
 def nc_creat_ncfile_by_ncfiles(outfile,varname,input_file_list,input_varlist,
