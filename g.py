@@ -2544,6 +2544,19 @@ def Axes_remove_last_yticklabel(ax,ind=0):
 
 def imshow(data,lognorm=False,ax=None,vmin=None,vmax=None,
            interpolation='none',**kwargs):
+    """
+    This is a simple wrapper around mat.axes.Axes.imshow (equivalent to plt.imshow).
+
+    The only keyward argument that often causes confusion is `origin`.
+    According to the document of plt.imshow:
+
+    origin : ['upper' | 'lower'], optional, default: None
+    Place the [0,0] index of the array in the upper left or lower left
+    corner of the axes. If None, default to rc `image.origin`.
+
+    It is verified that rc `image.origin` has a value of 'upper', which means by
+    default the [0,0] index of the array is placed in the upper left.
+    """
     if ax is None: fig,ax = Create_1Axes()
     if vmin is None:
         vdmin = np.ma.min(data)

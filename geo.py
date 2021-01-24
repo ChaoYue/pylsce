@@ -536,6 +536,17 @@ def distance_haversine_dataframe(dft):
 def Write_GTiff(filename,rasterOrigin,pixelWidth,pixelHeight,array):
     """
     rasterOrigin: (originX, originY)
+
+    # the documentation for GeoTransform is as below:
+    adfGeoTransform[0] /* top left x */
+    adfGeoTransform[1] /* w-e pixel resolution */
+    adfGeoTransform[2] /* 0 */
+    adfGeoTransform[3] /* top left y */
+    adfGeoTransform[4] /* 0 */
+    adfGeoTransform[5] /* n-s pixel resolution (negative value) */
+
+    It's verified that by setting originY as the bottom of latitude and
+    pixelHeight as a negative number can write the output tif file as north-down.
     """
     cols = array.shape[1]
     rows = array.shape[0]
@@ -553,10 +564,11 @@ def Read_GTiff(filename):
     data = ds.ReadAsArray()
     return data
 
-                                                                                
-def WriteAsGTiff(array,filename,example_file):                                               
+def WriteAsGTiff(array,filename,example_file):
     """
-    example_file = 'GanNanFiles/FL_1h/FL_1h.tif'                                    
+    example_file = 'GanNanFiles/FL_1h/FL_1h.tif'
+
+    It's verified that this function works well for a North-down tif file.
     """
     ds = gdal.Open(example_file)                                                    
     size_x = ds.RasterXSize                                                         
@@ -577,5 +589,13 @@ def Get_LatLon_GTiff(fname):
     lon = np.arange(originX,originX+pixelWidth*size_x,pixelWidth)
     lat = np.arange(originY,originY+pixelHeight*size_y,pixelHeight)
     return lat,lon
+
+def Read_Gtiff_data_latlon(fname):
+    """
+    Return lat,lon,data
+    """
+    lat,lon = Get_LatLon_GTiff(fname)
+    data = Read_GTiff(fname)
+    return lat,lon,data
 
 
