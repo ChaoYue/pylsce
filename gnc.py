@@ -172,6 +172,26 @@ def find_index_by_point(lat,lon,(vlat,vlon)):
     return (index_lat,index_lon)
 
 
+def find_index_increasing_lat(glat,glon,(vlat,vlon)):
+    """
+    Return (ind_lat,ind_lon). This function applies in the case with increasing
+    latitude.
+    """
+    if glat[0] - glat[1] > 0:
+        raise ValueError("latitude must increase.")
+
+    if glon[0] - glon[1] > 0:
+        raise ValueError("longitude must increase.")
+
+    lat1 = glat[0]
+    lon1 = glon[0]
+    step_lat = glat[1] - glat[0]
+    step_lon = glon[1] - glon[0]
+
+    ind_lat = np.floor((vlat - lat1)/step_lat).astype('int')
+    ind_lon = np.floor((vlon - lon1)/step_lon).astype('int')
+    return ind_lat,ind_lon
+
 def test_find_index_by_vertex():
     d = pb.pfload(basedata_dir+'/landmask_et_latlon.pf')
     (lon_index_min, lon_index_max, lat_index_min, lat_index_max) = find_index_by_vertex(d.globHDlon, d.globHDlat, (-50,20),(-35,25))

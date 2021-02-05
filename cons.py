@@ -114,6 +114,6 @@ vars_diagose_fire = ['D_AREA_BURNT','D_NUMFIRE','D_FDI','ROS_F','LITTER_CONSUMP'
 
 
 
-vars_biomass_c_trunk = [u'LEAF_M_c', u'RESERVE_M_c', u'ROOT_M_c', u'SAP_M_BE_c', u'SAP_M_AB_c',u'HEART_M_BE_c', u'HEART_M_AB_c', u'FRUIT_M_c','LABILE_M_c','TOTAL_M']
+vars_biomass_c_trunk = [u'LEAF_M_c', u'RESERVE_M_c', u'ROOT_M_c', u'SAP_M_BE_c', u'SAP_M_AB_c',u'HEART_M_BE_c', u'HEART_M_AB_c', u'FRUIT_M_c','LABILE_M_c','TOTAL_M_c']
 vars_litter = [u'LITTER_MET_AB',u'LITTER_MET_BE',u'LITTER_STR_AB',u'LITTER_STR_BE']
 
