@@ -40,3 +40,8 @@ try:
 except ImportError:
     print "gdal not installed"
 
+try:
+    import statsmodels.api as sm
+    print "statsmodels version: ",sm.__version__
+except ImportError:
+    print "statsmodels not installed"
