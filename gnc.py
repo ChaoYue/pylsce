@@ -1505,6 +1505,31 @@ def ncfile_dim_check(infile,outfile,varlist='all',reginterval=None):
     limdimvar2_full=f1.variables[limdimvar2_name]
     unlimdimvar_full=f1.variables[unlimdimvar_name]
 
+def nc_add_NestPdata_list_ncdata(ncdatalist,parent_taglist,varlist,
+                                 npindex=np.s_[:],unit=True,
+                                 pftsum=False,spa=None,
+                                 scale=1):
+    """
+    This will add the varnames in varlist to a NestPdata object
+    	specified by npindex, note the npindex must be numpy
+    	index trick object (np.s_).
+
+    Arguments:
+    -----------
+    parent_taglist: corresponding to the ncdatalist.
+
+    Notes:
+    ------
+    varlist will be the child taglist for the returned NestPdata object.
+    """
+    dic = OrderedDict()
+    for i,(tag,ncdata) in enumerate(zip(parent_taglist,ncdatalist)):
+        pd = ncdata.Add_Vars_to_Pdata(varlist,npindex=npindex,unit=unit,
+                                      pftsum=pftsum,spa=spa,scale=scale)
+        dic[tag] = pd
+    return Pdata.NestPdata(dic)
+
+
 class Ncdata(object):
     """
     NCdata is object facilitating maping and exploring nc file.
@@ -2868,33 +2893,10 @@ class Ncdata(object):
                 try:
                     pd.add_attr_by_tag(unit=[(varname,
                             self.d0.__dict__[varname].getncattr('units'))])
-                except AttributeError:
+                except (AttributeError,KeyError), e:
                     pass
         return pd
 
-def nc_add_NestPdata_list_ncdata(ncdatalist,parent_taglist,varlist,
-                                 npindex=np.s_[:],unit=True,
-                                 pftsum=False,spa=None,
-                                 scale=1):
-    """
-    This will add the varnames in varlist to a NestPdata object
-    	specified by npindex, note the npindex must be numpy
-    	index trick object (np.s_).
-
-    Arguments:
-    -----------
-    parent_taglist: corresponding to the ncdatalist.
-
-    Notes:
-    ------
-    varlist will be the child taglist for the returned NestPdata object.
-    """
-    dic = OrderedDict()
-    for i,(tag,ncdata) in enumerate(zip(parent_taglist,ncdatalist)):
-        pd = ncdata.Add_Vars_to_Pdata(varlist,npindex=npindex,unit=unit,
-                                      pftsum=pftsum,spa=spa,scale=scale)
-        dic[tag] = pd
-    return Pdata.NestPdata(dic)
 
     def Add_Single_Var_Pdata_EachPixel(self,varname,
                              rlat=None,
@@ -3638,6 +3640,18 @@ def nc_add_NestPdata_list_ncdata(ncdatalist,parent_taglist,varlist,
         list_pos = [(indlat[num],indlon[num]) for num in range(len(indlat))]
         return list_pos.index((latpos,lonpos))+1 #note the index in ORC
                                                  #fortran code is 1-based.
+    def OrcBio_get_CNratio(self):
+        """
+        Get the CN ratio of biomass compartments.
+        """
+        vars_biomass_c_trunk = [u'LEAF_M_c', u'RESERVE_M_c', u'ROOT_M_c', u'SAP_M_BE_c', u'SAP_M_AB_c',u'HEART_M_BE_c', u'HEART_M_AB_c', u'FRUIT_M_c','LABILE_M_c','TOTAL_M_c']
+        vars_biomass_n_trunk = [u'LEAF_M_n', u'RESERVE_M_n', u'ROOT_M_n', u'SAP_M_BE_n', u'SAP_M_AB_n',u'HEART_M_BE_n', u'HEART_M_AB_n', u'FRUIT_M_n','LABILE_M_n','TOTAL_M_n']
+        for i in range(len(vars_biomass_c_trunk)):
+            varname_cn = 'CN_'+vars_biomass_c_trunk[i][:-2]
+            self.d1.__dict__[varname_cn] = self.d1.__dict__[vars_biomass_c_trunk[i]]/self.d1.__dict__[vars_biomass_n_trunk[i]]
+
+    def OrcBio_get_RmGPP_ratio(self):
+        self.d1.__dict__['Ratio_Rm_GPP'] = self.d1.__dict__['MAINT_RESP_WEEK']/self.d1.__dict__['GPP_WEEK']
 
 class NestNcdata(object):
     """

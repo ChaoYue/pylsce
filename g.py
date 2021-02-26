@@ -2597,3 +2597,24 @@ def debug_read_string(s=None,shape=None):
     else:
         return data.reshape(shape,order='F')
 
+def set_xaxis_365days(num,ax=None):
+    days = np.arange(0,365*num+1,365)
+    if ax is None:
+        ax = plt.gca()
+    ax.set_xlim(0,365*num)
+    g.Plot_Vertical_Lines(ax,days,lp='k--',lw=0.5);
+    
+    list_ticks = []
+    list_ticklabel = []
+
+    s_base = np.arange(0,365,30)
+    for i in range(num):
+        list_ticks.append(s_base+365*i)
+        list_ticklabel.append(s_base)
+
+    arr_ticks = np.array(pb.iteflat(list_ticks))
+    arr_labels = np.array(pb.iteflat(list_ticklabel))
+    
+    ax.set_xticks(arr_ticks)
+    ax.set_xticklabels(arr_labels)
+
