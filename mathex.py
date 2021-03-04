@@ -773,21 +773,34 @@ def d2m(data,mode='sum'):
     """
     Transform the daily data to monthly data.
 
+    Parameters:
+    ------
+    mode: 'sum','mean','max', or 'min'.
+
     Notes:
     ------
-    1. Default calendar is noleap and the length of the first dimension should be 365
+    The use of leap calendar (the length of the first dimension should be 366)
+       or noleap calendar (the length of the first dimension should be 365) is
+       determined by checking the length of the first dimension.
     """
     noleap = np.array([ 31,  59,  90, 120, 151, 181, 212, 243, 273, 304, 334, 365])
+    leap = np.array([ 31,  60,  91, 121, 152, 182, 213, 244, 274, 305, 335, 366])
 
     if data.shape[0] == 365:
         indarr = noleap
+    elif data.shape[0] == 366:
+        indarr = leap
     else:
-        raise ValueError("Can only handle noleap data.")
+        raise ValueError("The length of first dimension can only be 365 or 366")
 
     if mode == 'sum':
         func = lambda x:x.sum(axis=0)
     elif mode == 'mean':
         func = lambda x:x.mean(axis=0)
+    elif mode == 'max':
+        func = lambda x:x.max(axis=0)
+    elif mode == 'min':
+        func = lambda x:x.min(axis=0)
     else:
         raise ValueError("mode could only be sum or mean")
 

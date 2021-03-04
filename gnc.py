@@ -1684,7 +1684,11 @@ class Ncdata(object):
             self.latvar_name='y'
             self.lonvar_name='x'
         else:
-            raise ValueError('Warning! Default lat and lon names are not found in the data, please specify by add_latvar_lonvar_name, or update default list')
+            try:
+                self.latvar_name=Ncdata.latvar_name
+                self.lonvar_name=Ncdata.lonvar_name
+            except AttributeError:
+                raise ValueError('Warning! Default lat and lon names are not found in the data, please specify by add_latvar_lonvar_name, or update default list')
 
         #find lat/lon values
         org_latvar = grp.variables[self.latvar_name][:]
@@ -1776,9 +1780,10 @@ class Ncdata(object):
     def flags_restore(cls):
         cls.flags = cls.flags_original.copy()
 
+    @classmethod
     def add_latvar_lonvar_name(cls,latvar_name,lonvar_name):
-        self.latvar_name=latvar_name
-        self.lonvar_name=lonvar_name
+        cls.latvar_name=latvar_name
+        cls.lonvar_name=lonvar_name
 
     def __repr__(self):
         return '\n'.join([repr(self.__class__),self.filename])
