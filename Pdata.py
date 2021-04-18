@@ -28,6 +28,7 @@ import gnc
 import LabelAxes
 import tools
 import mathex
+import xarray
 
 def append_doc_of(fun):
     def decorator(f):
@@ -4723,6 +4724,13 @@ class Pdata3D(object):
         for label,npd in self.iteritems():
             dic[label] = npd.to_Panel()
         return pa.Panel4D(dic)
+
+    def to_xarray(self):
+        dic = OrderedDict()
+        for label,npd in self.iteritems():
+            dic[label] = npd.to_Panel()
+        ds = xarray.Dataset(dic)
+        return ds.to_array()
 
     def __repr__(self):
         return "labels: {0}".format(self.labels)+ '\n' +\

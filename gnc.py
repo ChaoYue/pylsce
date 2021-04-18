@@ -1529,6 +1529,30 @@ def nc_add_NestPdata_list_ncdata(ncdatalist,parent_taglist,varlist,
         dic[tag] = pd
     return Pdata.NestPdata(dic)
 
+def nc_add_NestPdata_list_ncdata_SingleVar(ncdatalist,parent_taglist,
+                                 varname,child_taglist,npindex=np.s_[:],
+                                 child_tagaxis=0,child_x=None):
+    """
+    This will add the varnames in varlist to a NestPdata object
+    	specified by npindex, note the npindex must be numpy
+    	index trick object (np.s_).
+
+    Arguments:
+    -----------
+    parent_taglist: corresponding to the ncdatalist.
+    child_taglist,child_tagaxis: the child tags corresponding to the child_tagaxis,
+       which specifies the axis over which to build the Pdata.
+
+    Notes:
+    ------
+    varlist will be the child taglist for the returned NestPdata object.
+    """
+    dic = OrderedDict()
+    for i,(tag,ncdata) in enumerate(zip(parent_taglist,ncdatalist)):
+        pd = Pdata.Pdata.from_ndarray(ncdata.d1.__dict__[varname][npindex],
+                  tagaxis=child_tagaxis,taglist=child_taglist,x=child_x)
+        dic[tag] = pd
+    return Pdata.NestPdata(dic)
 
 class Ncdata(object):
     """
@@ -4077,6 +4101,35 @@ def nc_add_Pdata_List_Ncdata(Ncdata_list,taglist,varname,spa=None,
                                  tag=tag)
 
     return pd
+
+def nc_add_NestPdata_NestDictNcdata(nestdic,varname,spa=None,
+                                    npindex=np.s_[:],pyfunc=None):
+    """
+    Add NestPdata from a nested dictionary of Ncdata.
+
+    Parameters:
+    ----------
+    1. spa: 'spasum' or 'spamean', used to extract data after making
+        the "get_spa()" operation of the Ncdata objects.
+    2. npindex: used to directly slice the gnc.Ncdata.d1 attributes (or
+       spasum/spamean attributes), which is the default when spa is None.
+    3. pyfunc: applied at the last stage on the data that are retrieved.
+    """
+    dicpd = OrderedDict()
+    for ptag,ncdic in nestdic.iteritems():
+        pd = Pdata.Pdata()
+        for ctag,ncdata in ncdic.iteritems():
+            if spa is None:
+                data = ncdata.d1.__dict__[varname][npindex]
+
+            else:
+                data = ncdata.__dict__[spa].__dict__[varname]
+            pd.add_entry_noerror(x=None,y=mathex.apply_func(data,pyfunc=pyfunc),
+                                 tag=ctag)
+        dicpd[ptag] = pd
+
+    return Pdata.NestPdata(dicpd)
+
 
 @append_doc_of(_set_default_ncfile_for_write)
 def nc_creat_ncfile_by_ncfiles(outfile,varname,input_file_list,input_varlist,
