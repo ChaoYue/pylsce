@@ -1675,6 +1675,9 @@ class Ncdata(object):
             elif 'x' in self.dimensions and 'y' in self.dimensions:
                 self.latdim_name = 'y'
                 self.londim_name = 'x'
+            elif 'lat_domain_landpoints' in self.dimensions and 'lon_domain_landpoints' in self.dimensions:
+                self.latdim_name = 'lat_domain_landpoints'
+                self.londim_name = 'lon_domain_landpoints'
             else:
                 raise ValueError("lat/lon dimension names could not be guessed, please either provide the latlon_dim_name or expand default guess list")
         else:
@@ -1707,6 +1710,9 @@ class Ncdata(object):
         elif 'x' in self.varlist_all and 'y' in self.varlist_all:
             self.latvar_name='y'
             self.lonvar_name='x'
+        elif 'lat_domain_landpoints' in self.varlist_all and 'lon_domain_landpoints' in self.varlist_all:
+            self.latvar_name = 'lat_domain_landpoints'
+            self.lonvar_name = 'lon_domain_landpoints'
         else:
             try:
                 self.latvar_name=Ncdata.latvar_name
@@ -4099,6 +4105,40 @@ def nc_add_Pdata_List_Ncdata(Ncdata_list,taglist,varname,spa=None,
             data = ncdata.__dict__[spa].__dict__[varname]
         pd.add_entry_noerror(x=None,y=mathex.apply_func(data,pyfunc=pyfunc),
                                  tag=tag)
+
+    return pd
+
+def nc_add_Pdata_List_Ncdata_paired_varname(Ncdata_list,taglist,varname_x,
+                                           varname_y, spa=None,
+                                           npindex=np.s_[:],pyfunc=None):
+    """
+    Create a Pdata.Pdata object by extracting varname_x (i.e., 'x' in Pdata.Pdata
+    object) and varname_y (i.e., 'y' value in Pdata.Pdata.object) from a list
+    of gnc.Ncdata object, by using the given `taglist`.
+
+    Parameters:
+    ----------
+    1. spa: 'spasum' or 'spamean', used to extract data after making
+        the "get_spa()" operation of the Ncdata objects.
+    2. npindex: used to directly slice the gnc.Ncdata.d1 attributes, which
+        is the default when spa is None
+    3. pyfunc: applied at the last stage on the data that are retrieved.
+    4. varname_x, varname_y: the variable name for 'x' and 'y' values in the
+       Pdata.Pdata object.
+    """
+    pd = Pdata.Pdata()
+    for tag,ncdata in zip(taglist,Ncdata_list):
+        if spa is None:
+            xdata = ncdata.d1.__dict__[varname_x][npindex]
+            ydata = ncdata.d1.__dict__[varname_y][npindex]
+
+        else:
+            xdata = ncdata.__dict__[spa].__dict__[varname_x]
+            ydata = ncdata.__dict__[spa].__dict__[varname_y]
+
+        xdata_final = mathex.apply_func(xdata,pyfunc=pyfunc)
+        ydata_final = mathex.apply_func(ydata,pyfunc=pyfunc)
+        pd.add_entry_noerror(x=xdata_final,y=ydata_final,tag=tag)
 
     return pd
 
